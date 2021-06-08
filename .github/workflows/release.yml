@@ -21,7 +21,7 @@ jobs:
           wget https://github.com/github/hub/releases/download/v2.14.2/hub-linux-amd64-2.14.2.tgz
           tar -xzvf hub-linux-amd64-2.14.2.tgz
           ./hub-linux-amd64-2.14.2/install
-          PATH=/usr/bin:$PATH
+          rm /opt/view/bin/git
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Build project
