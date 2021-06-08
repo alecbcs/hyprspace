@@ -23,7 +23,9 @@ jobs:
           ./hub-linux-amd64-2.14.2/install
           rm /opt/view/bin/git
       - name: Checkout code
-        uses: actions/checkout@v2
+        run : |
+          git clone https://github.com/hyprspace/hyprspace
+          cd hyprspace
       - name: Build project
         run: |
           chmod a+x .github/workflows/build.sh
