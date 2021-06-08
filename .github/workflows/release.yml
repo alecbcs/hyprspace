@@ -14,6 +14,10 @@ jobs:
       image: ghcr.io/autamus/go
       options: --entrypoint /bin/bash
     steps:
+      - name: Setup Environment
+        run: |
+          apt-get update 
+          apt-get install hub git
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Build project
@@ -25,7 +29,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          apt-get update 
-          apt-get install hub
           chmod a+x .github/workflows/release.sh
           ./.github/workflows/release.sh
