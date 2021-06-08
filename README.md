@@ -16,6 +16,12 @@ Honestly, I even use this system when I'm at home and could connect directly to 
 
 If anyone else has some use cases please add them! Pull requests welcome!
 
+## Prerequisites
+If you're running Hyprspace on a Mac you'll need to install `iproute2mac`. If you're using the `brew` package manager that's as simple as,
+```bash
+brew install iproute2mac
+```
+
 ## Installation
 
 1. Go to Hyprspace Releases (other there -->)
@@ -43,7 +49,7 @@ If anyone else has some use cases please add them! Pull requests welcome!
 The first thing we'll want to do once we've got Hyprspace installed is
 initialize the configuration for an interface. In this case we'll call the
 interface on our local machine `hs0` (for hypr-space 0) and `hs1` on our remote server
-but yours could be anything you'd like.
+but yours could be anything you'd like. (Note: if you're using a Mac you'll have to use the interface name `utun[0-9]`. Check which interfaces are already in use by running `ip a` once you've got `iproute2mac` installed.)
 
 ###### Local Machine
 ```bash
