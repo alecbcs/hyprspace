@@ -2,7 +2,7 @@
 
 set -x
 assets=()
-for asset in ./ait-*; do
+for asset in ./hyprspace-*; do
     assets+=("-a" "$asset")
 done
 tag_name="${GITHUB_REF##*/}"
