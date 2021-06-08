@@ -47,12 +47,12 @@ but yours could be anything you'd like.
 
 ###### Local Machine
 ```bash
-hyprspace init hs0
+sudo hyprspace init hs0
 ```
 
 ###### Remote Machine
 ```bash
-hyprspace init hs1
+sudo hyprspace init hs1
 ```
 
 ### Add Each Machine As A Peer Of The Other
