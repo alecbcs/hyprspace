@@ -17,7 +17,7 @@ jobs:
       - name: Setup Environment
         run: |
           apt-get update 
-          apt-get install -y git wget
+          apt-get install -y git wget libintl-perl
           wget https://github.com/github/hub/releases/download/v2.14.2/hub-linux-amd64-2.14.2.tgz
           tar -xzvf hub-linux-amd64-2.14.2.tgz
           ./hub-linux-amd64-2.14.2/install
