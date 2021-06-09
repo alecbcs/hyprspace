@@ -19,6 +19,11 @@ A Lightweight VPN Built on top of Libp2p for Truly Distributed Networks.
 
 **Moreover! Each node doesn't even need to know the other's ip address prior to starting up the connection.** This makes Hyprspace perfect for devices that frequently migrate between locations but still require a constant virtual ip address.
 
+### So How Does Hyprspace Compare to Something Like Wireguard?
+[Wireguard](https://wireguard.com) is an amazing VPN written by Jason A. Donenfeld. If you haven't already, definetly go check it out! Wireguard actually inspired me to write Hyprspace. That said, although Wireguard is in a class of it's own as a great VPN, it requires at least one of your nodes to have a public IP address. In this mode, as long as one of your nodes is publicly accessible, it can be used as a cental relay for you to contact the other nodes in the network. However this means that all of the traffic for your entire system is going through that one node which can slow down your network and makes it fradgile if that node goes down you loose the whole network. So instead say that you want each node to be able to directly connect to eachother as they do in Hyprspace. Unfortunetly through Wireguard this would require every node to be publicly addressible which means manual port forwarding and no travelling node.
+
+By contrast Hyprspace allows all of your nodes to connect directly to eachother creating a stong reliable network even if they're all behind firewalls. No manual port forwarding required! 
+
 ## Use Cases:
 ##### A Digital Nomad
 I use this system when travelling, if I'm staying in a rental or hotel and want to try something out on a Raspberry Pi I can plug the Pi into the location's router or ethernet port and then just ssh into the system using the same-old internal Hyprspace ip address without having to worry about their NAT or local firewall. Furthermore, if I'm connected to the Virtual Hyprspace Network I can ssh into my machines at home without requiring me to set up any sort of port forwarding.
