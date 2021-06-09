@@ -1,8 +1,20 @@
-# Hyprspace
 <img src="hyprspace.png" width="300" height="300">
-Hyprspace is a Wireguard-like VPN built on top of Libp2p. 
 
-## What is Libp2p and Why Use it?
+# Hyprspace
+A Lightweight VPN Built on top of Libp2p for Truly Distributed Networks. 
+
+## Table of Contents
+- [A Bit of Backstory](#a-bit-of-backstory)
+- [Use Cases](#use-cases)
+  - [A Digital Nomad](#a-digital-nomad)
+  - [A Privacy Advocate](#a-privacy-advocate)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Commands](#commands)
+- [Tutorial](#tutorial)
+
+## A Bit of Backstory
 [Libp2p](libp2p.io) is a networking library created by [Protocol Labs](https://protocol.ai) that allows nodes to discover eachother using a Distributed Hash Table. Paired with [NAT hole punching](https://en.wikipedia.org/wiki/Hole_punching_(networking)) this allows Hyprspace to create a direct encrypted tunnel between two nodes even if they're both behind firewalls.
 
 **Moreover! Each node doesn't even need to know the other's ip address prior to starting up the connection.** This makes Hyprspace perfect for devices that frequently migrate between locations but still require a constant virtual ip address.
@@ -16,13 +28,14 @@ Honestly, I even use this system when I'm at home and could connect directly to 
 
 If anyone else has some use cases please add them! Pull requests welcome!
 
-## Prerequisites
+## Getting Started
+### Prerequisites
 If you're running Hyprspace on a Mac you'll need to install `iproute2mac`. If you're using the `brew` package manager that's as simple as,
 ```bash
 brew install iproute2mac
 ```
 
-## Installation
+### Installation
 
 1. Go to Hyprspace Releases (other there -->)
 2. Copy the link for your corresponding OS and Architecture.
