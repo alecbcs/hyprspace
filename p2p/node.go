@@ -16,6 +16,11 @@ import (
 
 const Protocol = "/hyprspace/0.0.1"
 
+type Packet struct {
+	Plen int
+	Data []byte
+}
+
 func CreateNode(ctx context.Context, inputKey string, handler network.StreamHandler) (node host.Host, dhtOut *dht.IpfsDHT, err error) {
 	// Unmarshall Private Key
 	privateKey, err := crypto.UnmarshalPrivateKey([]byte(inputKey))

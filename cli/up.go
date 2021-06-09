@@ -45,7 +45,7 @@ type UpArgs struct {
 }
 
 type UpFlags struct {
-	Forground bool `short:"f" long:"forground" desc:"Don't Create Background Daemon."`
+	Foreground bool `short:"f" long:"foreground" desc:"Don't Create Background Daemon."`
 }
 
 func UpRun(r *cmd.Root, c *cmd.Sub) {
@@ -65,7 +65,7 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 	Global, err := config.Read(configPath)
 	checkErr(err)
 
-	if !flags.Forground {
+	if !flags.Foreground {
 		// Make results chan
 		out := make(chan bool)
 		go createDaemon(out)
@@ -163,7 +163,7 @@ func createDaemon(out chan<- bool) {
 	// Create Sub Process
 	process, err := os.StartProcess(
 		path,
-		append(os.Args, "--forground"),
+		append(os.Args, "--foreground"),
 		&os.ProcAttr{
 			Files: []*os.File{nil, w, nil},
 		},
@@ -184,7 +184,7 @@ func createDaemon(out chan<- bool) {
 func streamHandler(stream network.Stream) {
 	// If the remote node ID isn't in the list of known nodes don't respond.
 	if _, ok := RevLookup[stream.Conn().RemotePeer().Pretty()]; !ok {
-		stream.Close()
+		stream.Reset()
 	}
 	io.Copy(iface.ReadWriteCloser, stream)
 	stream.Close()
@@ -195,7 +195,7 @@ func prettyDiscovery(ctx context.Context, node host.Host, peerTable map[string]p
 	for ip, id := range peerTable {
 		tempTable[ip] = id
 	}
-	for len(peerTable) > 0 {
+	for len(tempTable) > 0 {
 		for ip, id := range tempTable {
 			stream, err := node.NewStream(ctx, id, p2p.Protocol)
 			if err != nil && (strings.HasPrefix(err.Error(), "failed to dial") ||
