@@ -29,7 +29,7 @@ var (
 	RevLookup map[string]bool
 )
 
-// Pull downloads files from the Arken cluster.
+// Up creates and brings up a Hyprspace Interface.
 var Up = cmd.Sub{
 	Name:  "up",
 	Alias: "up",
@@ -44,6 +44,7 @@ type UpArgs struct {
 	InterfaceName string
 }
 
+// UpFlags handles the specific flags for the up command.
 type UpFlags struct {
 	Foreground bool `short:"f" long:"foreground" desc:"Don't Create Background Daemon."`
 }

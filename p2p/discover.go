@@ -13,6 +13,7 @@ import (
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 )
 
+// Discover starts up a DHT based discovery system finding and adding nodes with the same rendezvous string.
 func Discover(ctx context.Context, h host.Host, dht *dht.IpfsDHT, rendezvous string, peerTable map[string]peer.ID) {
 	var routingDiscovery = discovery.NewRoutingDiscovery(dht)
 	discovery.Advertise(ctx, routingDiscovery, rendezvous)

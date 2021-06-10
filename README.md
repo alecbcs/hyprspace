@@ -15,21 +15,21 @@ A Lightweight VPN Built on top of Libp2p for Truly Distributed Networks.
 - [Tutorial](#tutorial)
 
 ## A Bit of Backstory
-[Libp2p](libp2p.io) is a networking library created by [Protocol Labs](https://protocol.ai) that allows nodes to discover eachother using a Distributed Hash Table. Paired with [NAT hole punching](https://en.wikipedia.org/wiki/Hole_punching_(networking)) this allows Hyprspace to create a direct encrypted tunnel between two nodes even if they're both behind firewalls.
+[Libp2p](libp2p.io) is a networking library created by [Protocol Labs](https://protocol.ai) that allows nodes to discover each other using a Distributed Hash Table. Paired with [NAT hole punching](https://en.wikipedia.org/wiki/Hole_punching_(networking)) this allows Hyprspace to create a direct encrypted tunnel between two nodes even if they're both behind firewalls.
 
 **Moreover! Each node doesn't even need to know the other's ip address prior to starting up the connection.** This makes Hyprspace perfect for devices that frequently migrate between locations but still require a constant virtual ip address.
 
 ### So How Does Hyprspace Compare to Something Like Wireguard?
-[Wireguard](https://wireguard.com) is an amazing VPN written by Jason A. Donenfeld. If you haven't already, definetly go check it out! Wireguard actually inspired me to write Hyprspace. That said, although Wireguard is in a class of it's own as a great VPN, it requires at least one of your nodes to have a public IP address. In this mode, as long as one of your nodes is publicly accessible, it can be used as a cental relay to reach the other nodes in the network. However, this means that all of the traffic for your entire system is going through that one system which can slow down your network and make it fradgile in the case that node goes down and you loose the whole network. So instead say that you want each node to be able to directly connect to eachother as they do in Hyprspace. Unfortunetly through Wireguard this would require every node to be publicly addressible which means manual port forwarding and no travelling nodes.
+[Wireguard](https://wireguard.com) is an amazing VPN written by Jason A. Donenfeld. If you haven't already, definitely go check it out! Wireguard actually inspired me to write Hyprspace. That said, although Wireguard is in a class of it's own as a great VPN, it requires at least one of your nodes to have a public IP address. In this mode, as long as one of your nodes is publicly accessible, it can be used as a cental relay to reach the other nodes in the network. However, this means that all of the traffic for your entire system is going through that one system which can slow down your network and make it fragile in the case that node goes down and you loose the whole network. So instead say that you want each node to be able to directly connect to each other as they do in Hyprspace. Unfortunately through Wireguard this would require every node to be publicly addressable which means manual port forwarding and no travelling nodes.
 
-By contrast Hyprspace allows all of your nodes to connect directly to eachother creating a stong reliable network even if they're all behind their own firewalls. No manual port forwarding required! 
+By contrast Hyprspace allows all of your nodes to connect directly to each other creating a strong reliable network even if they're all behind their own firewalls. No manual port forwarding required! 
 
 ## Use Cases:
 ##### A Digital Nomad
 I use this system when travelling, if I'm staying in a rental or hotel and want to try something out on a Raspberry Pi I can plug the Pi into the location's router or ethernet port and then just ssh into the system using the same-old internal Hyprspace ip address without having to worry about their NAT or local firewall. Furthermore, if I'm connected to the Virtual Hyprspace Network I can ssh into my machines at home without requiring me to set up any sort of port forwarding.
 
 ##### A Privacy Advocate
-Honestly, I even use this system when I'm at home and could connect directly to my local infastructure. Using Hyprspace however, I don't have to trust the security of my local network and hyprspace will intelligently connect to my machines using their local ip addresses for maximum speed.
+Honestly, I even use this system when I'm at home and could connect directly to my local infrastructure. Using Hyprspace however, I don't have to trust the security of my local network and Hyprspace will intelligently connect to my machines using their local ip addresses for maximum speed.
 
 If anyone else has some use cases please add them! Pull requests welcome!
 
@@ -84,7 +84,7 @@ sudo hyprspace init hs1
 ### Add Each Machine As A Peer Of The Other
 
 Now that we've got a set of configurations we'll want to
-tell the machines about eachother. By default Hyprspace will
+tell the machines about each other. By default Hyprspace will
 put the interface configurations in `/etc/hyprspace/interface-name.yaml`.
 So for our example we'll run
 
@@ -125,7 +125,7 @@ address for the machine who needs to change to be `10.1.1.2`.
 Looking in the interface's configuration you'll also notice a field called
 `discover_key` (right above the interface's private key). It doesn't matter
 which discovery key you pick but it much be the same for all of the nodes in your little cluster
-so that they can find eachother.
+so that they can find each other.
 
 (*Note you can use different `discover_key`s with different interfaces on the same 
 host to create different isolated networks.)
@@ -158,7 +158,7 @@ pinging back and forth across the network.
 ping 10.1.1.2
 ```
 
-### Stoping the Interface and Cleaning Up
+### Stopping the Interface and Cleaning Up
 Now to stop the interface and clean up the system you can run,
 
 ###### Local Machine

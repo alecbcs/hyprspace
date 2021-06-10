@@ -6,11 +6,13 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// Config is the main Configuration Struct for Hyprspace.
 type Config struct {
 	Interface Interface       `yaml:"interface"`
 	Peers     map[string]Peer `yaml:"peers"`
 }
 
+// Interface defines all of the fields that a local node needs to know about itself!
 type Interface struct {
 	Name        string `yaml:"name"`
 	Address     string `yaml:"address"`
@@ -19,11 +21,12 @@ type Interface struct {
 	PrivateKey  string `yaml:"private_key"`
 }
 
+// Peer defines a peer in the configuration. We might add more to this later.
 type Peer struct {
 	ID string `yaml:"id"`
 }
 
-// Read initalizes a config from a file.
+// Read initializes a config from a file.
 func Read(path string) (result Config, err error) {
 	in, err := os.ReadFile(path)
 	if err != nil {

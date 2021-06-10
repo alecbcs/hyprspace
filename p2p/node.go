@@ -14,15 +14,12 @@ import (
 	ma "github.com/multiformats/go-multiaddr"
 )
 
+// Protocol is a descriptor for the Hyprspace P2P Protocol.
 const Protocol = "/hyprspace/0.0.1"
 
-type Packet struct {
-	Plen int
-	Data []byte
-}
-
+// CreateNode creates an internal Libp2p nodes and returns it and it's DHT Discovery service.
 func CreateNode(ctx context.Context, inputKey string, handler network.StreamHandler) (node host.Host, dhtOut *dht.IpfsDHT, err error) {
-	// Unmarshall Private Key
+	// Unmarshal Private Key
 	privateKey, err := crypto.UnmarshalPrivateKey([]byte(inputKey))
 	if err != nil {
 		return

@@ -14,7 +14,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// Pull downloads files from the Arken cluster.
+// Init creates a configuration for a Hyprspace Interface.
 var Init = cmd.Sub{
 	Name:  "init",
 	Alias: "i",

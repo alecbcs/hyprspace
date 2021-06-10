@@ -7,7 +7,7 @@ import (
 	"github.com/hyprspace/hyprspace/tun"
 )
 
-// Pull downloads files from the Arken cluster.
+// Down brings down a Hyprspace interface and removes it from the system.
 var Down = cmd.Sub{
 	Name:  "down",
 	Alias: "d",
@@ -16,7 +16,7 @@ var Down = cmd.Sub{
 	Run:   DownRun,
 }
 
-// UpArgs handles the specific arguments for the up command.
+// DownArgs handles the specific arguments for the down command.
 type DownArgs struct {
 	InterfaceName string
 }
