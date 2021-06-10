@@ -24,8 +24,14 @@ import (
 )
 
 var (
-	Global    config.Config
-	iface     *water.Interface
+	// Global is the global interface configuration for the
+	// application instance.
+	Global config.Config
+	// iface is the tun device used to pass packets between
+	// Hyprspace and the user's machine.
+	iface *water.Interface
+	// RevLookup allow quick lookups of an incoming stream
+	// for security before accepting or responding to any data.
 	RevLookup map[string]bool
 )
 
