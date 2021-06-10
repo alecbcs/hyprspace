@@ -19,7 +19,7 @@ var Root *cmd.Root
 
 func init() {
 	Root = &cmd.Root{
-		Name:  "hypr",
+		Name:  "hyprspace",
 		Short: "Hyprspace Distributed Network",
 		Flags: &GlobalFlags{},
 	}

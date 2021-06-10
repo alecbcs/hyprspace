@@ -98,7 +98,7 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 	iface, err = tun.New(Global.Interface.Name)
 	checkErr(err)
 	// Set TUN MTU
-	tun.SetMTU(Global.Interface.Name, 1500)
+	tun.SetMTU(Global.Interface.Name, 1420)
 	// Add Address to Interface
 	tun.SetAddress(Global.Interface.Name, Global.Interface.Address)
 
@@ -141,23 +141,23 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 
 	fmt.Println("[+] Network Setup Complete...Waiting on Node Discovery")
 	// Listen For New Packets on TUN Interface
-	packet := make([]byte, 1500)
+	packet := make([]byte, 1420)
+	var stream network.Stream
+	var header *ipv4.Header
+	var plen int
 	for {
-		plen, err := iface.Read(packet)
+		plen, err = iface.Read(packet)
 		checkErr(err)
-		header, _ := ipv4.ParseHeader(packet[:plen])
+		header, _ = ipv4.ParseHeader(packet)
 		_, ok := Global.Peers[header.Dst.String()]
 		if ok {
-			stream, err := host.NewStream(context.Background(), peerTable[header.Dst.String()], p2p.Protocol)
+			stream, err = host.NewStream(ctx, peerTable[header.Dst.String()], p2p.Protocol)
 			if err != nil {
 				log.Println(err)
 				continue
 			}
-
-			go func() {
-				stream.Write(packet[:plen])
-				stream.Close()
-			}()
+			stream.Write(packet[:plen])
+			stream.Close()
 		}
 	}
 }
