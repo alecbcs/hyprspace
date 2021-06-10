@@ -39,6 +39,9 @@ Honestly, I even use this system when I'm at home and could connect directly to 
 
 If anyone else has some use cases please add them! Pull requests welcome!
 
+| :exclamation: | Hyprspace is still a very new project. Although we've tested the code locally for security, it hasn't been audited by a third party yet. We probably wouldn't trust it yet in high security environments. |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+
 ## Getting Started
 ### Prerequisites
 If you're running Hyprspace on a Mac you'll need to install `iproute2mac`. If you're using the `brew` package manager that's as simple as,
