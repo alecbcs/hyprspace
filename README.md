@@ -5,9 +5,9 @@
 
 A Lightweight VPN Built on top of Libp2p for Truly Distributed Networks. 
 
-<video align="center" width="1280" height="720" controls>
-  <source src="demo.mp4" type="video/mp4">
-</video> 
+https://user-images.githubusercontent.com/19558067/121469777-f42cdb80-c971-11eb-84de-9dd4f6d6cd1f.mp4
+
+
 
 ## Table of Contents
 - [A Bit of Backstory](#a-bit-of-backstory)
