@@ -21,6 +21,7 @@ type DownArgs struct {
 	InterfaceName string
 }
 
+// DownRun handles the execution of the down command.
 func DownRun(r *cmd.Root, c *cmd.Sub) {
 	// Parse Command Args
 	args := c.Args.(*DownArgs)

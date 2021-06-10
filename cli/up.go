@@ -49,6 +49,7 @@ type UpFlags struct {
 	Foreground bool `short:"f" long:"foreground" desc:"Don't Create Background Daemon."`
 }
 
+// UpRun handles the execution of the up command.
 func UpRun(r *cmd.Root, c *cmd.Sub) {
 	// Parse Command Args
 	args := c.Args.(*UpArgs)
@@ -76,7 +77,7 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 		case <-time.After(30 * time.Second):
 		}
 		checkErr(err)
-		fmt.Println("[+] Sucessfully Created Hyprspace Daemon")
+		fmt.Println("[+] Successfully Created Hyprspace Daemon")
 		return
 	}
 
@@ -205,7 +206,7 @@ func prettyDiscovery(ctx context.Context, node host.Host, peerTable map[string]p
 				continue
 			}
 			if err == nil {
-				fmt.Printf("[+] Connection to %s Sucessful. Network Ready.\n", ip)
+				fmt.Printf("[+] Connection to %s Successful. Network Ready.\n", ip)
 				stream.Close()
 			}
 			delete(tempTable, ip)

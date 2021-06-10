@@ -28,6 +28,7 @@ type InitArgs struct {
 	InterfaceName string
 }
 
+// InitRun handles the execution of the init command.
 func InitRun(r *cmd.Root, c *cmd.Sub) {
 	// Parse Command Arguments
 	args := c.Args.(*InitArgs)
