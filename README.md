@@ -1,6 +1,8 @@
 <img src="hyprspace.png" width="300" height="300">
 
 # Hyprspace
+[![Go Report Card](https://goreportcard.com/badge/github.com/hyprspace/hyprspace)](https://goreportcard.com/report/github.com/hyprspace/hyprspace)
+
 A Lightweight VPN Built on top of Libp2p for Truly Distributed Networks. 
 
 ## Table of Contents
