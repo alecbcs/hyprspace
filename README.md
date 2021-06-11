@@ -51,7 +51,7 @@ brew install iproute2mac
 
 ### Installation
 
-1. Go to Hyprspace Releases (other there -->)
+1. Go to Hyprspace Releases (over there -->)
 2. Copy the link for your corresponding OS and Architecture.
 3. Run `sudo mkdir -p /usr/local/bin/`
 4. Run `sudo curl -L "PATH-TO-RELEASE" -o /usr/local/bin/hyprspace`
@@ -68,7 +68,7 @@ brew install iproute2mac
 | `init`              | `i`     | Initialize an interface's configuration.                                   |
 | `up`                | `up`    | Create and Bring Up a Hyprspace Interface                                  |
 | `down  `            | `d`     | Bring Down and Delete A Hyprspace Interface                                |
-| `update`            | `upd`   | Have Hyprspace update its own binary.                                      |
+| `update`            | `upd`   | Have Hyprspace update its own binary to the latest release.                                      |
 
 ## Tutorial
 
