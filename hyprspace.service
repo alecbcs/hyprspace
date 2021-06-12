@@ -1,0 +1,12 @@
+[Unit]
+Description=hyprspace daemon
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/hyprspace up hs0 --foreground
+ExecStop=/usr/local/bin/hyprspace down hs0
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=default.target
