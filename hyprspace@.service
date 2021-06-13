@@ -1,0 +1,12 @@
+[Unit]
+Description=hyprspace daemon for %i
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/local/bin/hyprspace up %i --foreground
+ExecStop=/usr/local/bin/hyprspace down %i
+Restart=on-failure
+
+[Install]
+WantedBy=default.target
