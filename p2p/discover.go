@@ -18,7 +18,7 @@ func Discover(ctx context.Context, h host.Host, dht *dht.IpfsDHT, rendezvous str
 	var routingDiscovery = discovery.NewRoutingDiscovery(dht)
 	discovery.Advertise(ctx, routingDiscovery, rendezvous)
 
-	ticker := time.NewTicker(time.Second * 1)
+	ticker := time.NewTicker(time.Second * 5)
 	defer ticker.Stop()
 
 	for {
