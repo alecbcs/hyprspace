@@ -18,7 +18,7 @@ import (
 const Protocol = "/hyprspace/0.0.1"
 
 // CreateNode creates an internal Libp2p nodes and returns it and it's DHT Discovery service.
-func CreateNode(ctx context.Context, inputKey string, handler network.StreamHandler) (node host.Host, dhtOut *dht.IpfsDHT, err error) {
+func CreateNode(ctx context.Context, inputKey string, port int, handler network.StreamHandler) (node host.Host, dhtOut *dht.IpfsDHT, err error) {
 	// Unmarshal Private Key
 	privateKey, err := crypto.UnmarshalPrivateKey([]byte(inputKey))
 	if err != nil {
@@ -27,7 +27,7 @@ func CreateNode(ctx context.Context, inputKey string, handler network.StreamHand
 
 	// Create libp2p node
 	node, err = libp2p.New(ctx,
-		libp2p.ListenAddrStrings(fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", 8001)),
+		libp2p.ListenAddrStrings(fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", port)),
 		libp2p.Identity(privateKey),
 	)
 	if err != nil {

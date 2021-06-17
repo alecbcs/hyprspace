@@ -3,11 +3,14 @@ package cli
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -75,15 +78,18 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 
 	if !flags.Foreground {
 		// Make results chan
-		out := make(chan bool)
+		out := make(chan error)
 		go createDaemon(out)
 
 		select {
-		case <-out:
+		case err = <-out:
 		case <-time.After(30 * time.Second):
 		}
-		checkErr(err)
-		fmt.Println("[+] Successfully Created Hyprspace Daemon")
+		if err != nil {
+			fmt.Println("[+] Failed to Create Hyprspace Daemon")
+		} else {
+			fmt.Println("[+] Successfully Created Hyprspace Daemon")
+		}
 		return
 	}
 
@@ -96,7 +102,9 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 	fmt.Println("[+] Creating TUN Device")
 	// Create new TUN device
 	iface, err = tun.New(Global.Interface.Name)
-	checkErr(err)
+	if err != nil {
+		checkErr(errors.New("interface already in use"))
+	}
 	// Set TUN MTU
 	tun.SetMTU(Global.Interface.Name, 1420)
 	// Add Address to Interface
@@ -106,8 +114,35 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 	ctx := context.Background()
 
 	fmt.Println("[+] Creating LibP2P Node")
+
+	// Check that the listener port is available.
+	var ln net.Listener
+	port := Global.Interface.ListenPort
+	if port != 8001 {
+		ln, err = net.Listen("tcp", ":"+strconv.Itoa(port))
+		if err != nil {
+			checkErr(errors.New("could not create node, listen port already in use by something else"))
+		}
+	} else {
+		for {
+			ln, err = net.Listen("tcp", ":"+strconv.Itoa(port))
+			if err == nil {
+				break
+			}
+			if port >= 65535 {
+				checkErr(errors.New("failed to find open port"))
+			}
+			port++
+		}
+	}
+	if ln != nil {
+		ln.Close()
+	}
 	// Create P2P Node
-	host, dht, err := p2p.CreateNode(ctx, Global.Interface.PrivateKey, streamHandler)
+	host, dht, err := p2p.CreateNode(ctx,
+		Global.Interface.PrivateKey,
+		port,
+		streamHandler)
 	checkErr(err)
 
 	// Setup Peer Table for Quick Packet --> Dest ID lookup
@@ -162,7 +197,7 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 	}
 }
 
-func createDaemon(out chan<- bool) {
+func createDaemon(out chan<- error) {
 	path, err := os.Executable()
 	checkErr(err)
 	// Create Pipe to monitor for daemon output.
@@ -173,7 +208,7 @@ func createDaemon(out chan<- bool) {
 		path,
 		append(os.Args, "--foreground"),
 		&os.ProcAttr{
-			Files: []*os.File{nil, w, nil},
+			Files: []*os.File{nil, w, w},
 		},
 	)
 	checkErr(err)
@@ -186,7 +221,10 @@ func createDaemon(out chan<- bool) {
 	fmt.Println(scanner.Text())
 	err = process.Release()
 	checkErr(err)
-	out <- true
+	if count < 4 {
+		out <- errors.New("failed to create daemon")
+	}
+	out <- nil
 }
 
 func streamHandler(stream network.Stream) {

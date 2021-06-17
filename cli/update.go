@@ -14,8 +14,6 @@ import (
 	"github.com/tcnksm/go-latest"
 )
 
-var appVersion string
-
 // Update checks for a new version of the Hyprspace program and updates itself
 // if a newer version is found and the user agrees to update.
 var Update = cmd.Sub{
