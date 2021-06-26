@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/ipfs/go-datastore"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/host"
@@ -38,10 +39,7 @@ func CreateNode(ctx context.Context, inputKey string, port int, handler network.
 	node.SetStreamHandler(Protocol, handler)
 
 	// Create DHT Subsystem
-	dhtOut, err = dht.New(ctx, node)
-	if err != nil {
-		return
-	}
+	dhtOut = dht.NewDHTClient(ctx, node, datastore.NewMapDatastore())
 
 	// Define Bootstrap Nodes.
 	peers := []string{
