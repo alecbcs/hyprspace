@@ -46,7 +46,7 @@ func Delete(name string) (err error) {
 }
 
 func ip(args ...string) (err error) {
-	cmd := exec.Command("/sbin/ip", args...)
+	cmd := exec.Command("ip", args...)
 	err = cmd.Run()
 	return
 }
