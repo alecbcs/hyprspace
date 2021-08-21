@@ -30,6 +30,9 @@ func CreateNode(ctx context.Context, inputKey string, port int, handler network.
 	node, err = libp2p.New(ctx,
 		libp2p.ListenAddrStrings(fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", port)),
 		libp2p.Identity(privateKey),
+		libp2p.DefaultSecurity,
+		libp2p.NATPortMap(),
+		libp2p.FallbackDefaults,
 	)
 	if err != nil {
 		return
