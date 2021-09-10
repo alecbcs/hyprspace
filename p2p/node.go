@@ -12,6 +12,7 @@ import (
 	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/peer"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
+	libp2pquic "github.com/libp2p/go-libp2p-quic-transport"
 	ma "github.com/multiformats/go-multiaddr"
 )
 
@@ -26,12 +27,16 @@ func CreateNode(ctx context.Context, inputKey string, port int, handler network.
 		return
 	}
 
+	ip6addr := fmt.Sprintf("/ip6/::/udp/%d/quic", port)
+	ip4addr := fmt.Sprintf("/ip4/0.0.0.0/udp/%d/quic", port)
+
 	// Create libp2p node
 	node, err = libp2p.New(ctx,
-		libp2p.ListenAddrStrings(fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", port)),
+		libp2p.ListenAddrStrings(ip6addr, ip4addr),
 		libp2p.Identity(privateKey),
 		libp2p.DefaultSecurity,
 		libp2p.NATPortMap(),
+		libp2p.Transport(libp2pquic.NewTransport),
 		libp2p.FallbackDefaults,
 	)
 	if err != nil {
