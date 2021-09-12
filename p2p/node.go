@@ -27,12 +27,15 @@ func CreateNode(ctx context.Context, inputKey string, port int, handler network.
 		return
 	}
 
-	ip6addr := fmt.Sprintf("/ip6/::/udp/%d/quic", port)
-	ip4addr := fmt.Sprintf("/ip4/0.0.0.0/udp/%d/quic", port)
+	ip6quic := fmt.Sprintf("/ip6/::/udp/%d/quic", port)
+	ip4quic := fmt.Sprintf("/ip4/0.0.0.0/udp/%d/quic", port)
+
+	ip6tcp := fmt.Sprintf("/ip6/::/tcp/%d/", port)
+	ip4tcp := fmt.Sprintf("/ip6/::/tcp/%d/", port)
 
 	// Create libp2p node
 	node, err = libp2p.New(ctx,
-		libp2p.ListenAddrStrings(ip6addr, ip4addr),
+		libp2p.ListenAddrStrings(ip6quic, ip4quic, ip6tcp, ip4tcp),
 		libp2p.Identity(privateKey),
 		libp2p.DefaultSecurity,
 		libp2p.NATPortMap(),
