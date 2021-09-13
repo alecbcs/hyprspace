@@ -13,6 +13,7 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	libp2pquic "github.com/libp2p/go-libp2p-quic-transport"
+	"github.com/libp2p/go-tcp-transport"
 	ma "github.com/multiformats/go-multiaddr"
 )
 
@@ -40,6 +41,7 @@ func CreateNode(ctx context.Context, inputKey string, port int, handler network.
 		libp2p.DefaultSecurity,
 		libp2p.NATPortMap(),
 		libp2p.Transport(libp2pquic.NewTransport),
+		libp2p.Transport(tcp.NewTCPTransport),
 		libp2p.FallbackDefaults,
 	)
 	if err != nil {
