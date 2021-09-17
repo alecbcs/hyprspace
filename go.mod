@@ -12,8 +12,8 @@ require (
 	github.com/libp2p/go-libp2p-core v0.8.6
 	github.com/libp2p/go-libp2p-discovery v0.5.0
 	github.com/libp2p/go-libp2p-kad-dht v0.12.1
-	github.com/libp2p/go-libp2p-quic-transport v0.12.0 // indirect
-	github.com/libp2p/go-tcp-transport v0.2.8 // indirect
+	github.com/libp2p/go-libp2p-quic-transport v0.12.0
+	github.com/libp2p/go-tcp-transport v0.2.8
 	github.com/multiformats/go-multiaddr v0.3.3
 	github.com/sethvargo/go-diceware v0.2.1
 	github.com/songgao/water v0.0.0-20200317203138-2b4b6d7c09d8

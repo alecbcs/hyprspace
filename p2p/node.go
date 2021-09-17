@@ -9,19 +9,35 @@ import (
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/host"
-	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/peer"
+	discovery "github.com/libp2p/go-libp2p-discovery"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	libp2pquic "github.com/libp2p/go-libp2p-quic-transport"
 	"github.com/libp2p/go-tcp-transport"
 	ma "github.com/multiformats/go-multiaddr"
 )
 
+type Libp2pNode struct {
+	// Represents the host context layer
+	Ctx context.Context
+
+	// Represents the libp2p host
+	Host host.Host
+
+	// Represents the DHT routing table
+	KadDHT *dht.IpfsDHT
+
+	// Represents the peer discovery service
+	Discovery *discovery.RoutingDiscovery
+}
+
 // Protocol is a descriptor for the Hyprspace P2P Protocol.
-const Protocol = "/hyprspace/0.0.1"
+const Protocol = "/hyprspace/0.0.2"
 
 // CreateNode creates an internal Libp2p nodes and returns it and it's DHT Discovery service.
-func CreateNode(ctx context.Context, inputKey string, port int, handler network.StreamHandler) (node host.Host, dhtOut *dht.IpfsDHT, err error) {
+func CreateNode(ctx context.Context, inputKey string, port int) (node *Libp2pNode, err error) {
+	node = new(Libp2pNode)
+
 	// Unmarshal Private Key
 	privateKey, err := crypto.UnmarshalPrivateKey([]byte(inputKey))
 	if err != nil {
@@ -35,7 +51,7 @@ func CreateNode(ctx context.Context, inputKey string, port int, handler network.
 	ip4tcp := fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", port)
 
 	// Create libp2p node
-	node, err = libp2p.New(ctx,
+	node.Host, err = libp2p.New(ctx,
 		libp2p.ListenAddrStrings(ip6quic, ip4quic, ip6tcp, ip4tcp),
 		libp2p.Identity(privateKey),
 		libp2p.DefaultSecurity,
@@ -48,11 +64,8 @@ func CreateNode(ctx context.Context, inputKey string, port int, handler network.
 		return
 	}
 
-	// Setup Hyprspace Stream Handler
-	node.SetStreamHandler(Protocol, handler)
-
 	// Create DHT Subsystem
-	dhtOut = dht.NewDHTClient(ctx, node, datastore.NewMapDatastore())
+	node.KadDHT = dht.NewDHTClient(ctx, node.Host, datastore.NewMapDatastore())
 
 	// Define Bootstrap Nodes.
 	peers := []string{
@@ -69,11 +82,11 @@ func CreateNode(ctx context.Context, inputKey string, port int, handler network.
 	for _, addrStr := range peers {
 		addr, err := ma.NewMultiaddr(addrStr)
 		if err != nil {
-			return node, dhtOut, err
+			return node, err
 		}
 		pii, err := peer.AddrInfoFromP2pAddr(addr)
 		if err != nil {
-			return node, dhtOut, err
+			return node, err
 		}
 		pi, ok := BootstrapPeers[pii.ID]
 		if !ok {
@@ -91,7 +104,7 @@ func CreateNode(ctx context.Context, inputKey string, port int, handler network.
 	for _, peerInfo := range BootstrapPeers {
 		go func(peerInfo *peer.AddrInfo) {
 			defer wg.Done()
-			err := node.Connect(ctx, *peerInfo)
+			err := node.Host.Connect(ctx, *peerInfo)
 			if err == nil {
 				count++
 			}
@@ -99,6 +112,10 @@ func CreateNode(ctx context.Context, inputKey string, port int, handler network.
 	}
 	wg.Wait()
 
-	err = dhtOut.Bootstrap(ctx)
+	err = node.KadDHT.Bootstrap(ctx)
+
+	// Setup routing discovery
+	node.Discovery = discovery.NewRoutingDiscovery(node.KadDHT)
+
 	return
 }

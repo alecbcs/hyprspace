@@ -1,15 +1,11 @@
 package cli
 
 import (
-	"bufio"
 	"context"
 	"errors"
 	"fmt"
-	"io"
-	"log"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
@@ -17,7 +13,6 @@ import (
 	"github.com/hyprspace/hyprspace/config"
 	"github.com/hyprspace/hyprspace/p2p"
 	"github.com/hyprspace/hyprspace/tun"
-	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/songgao/water"
@@ -33,7 +28,11 @@ var (
 	iface *water.Interface
 	// RevLookup allow quick lookups of an incoming stream
 	// for security before accepting or responding to any data.
-	RevLookup map[string]bool
+	RevLookup map[string]string
+
+	//Peer info table
+	PeerTable    map[string]*p2p.NetworkPeer
+	PeerTablePtr *map[string]*p2p.NetworkPeer
 )
 
 // Up creates and brings up a Hyprspace Interface.
@@ -91,10 +90,13 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 		return
 	}
 
+	// Setup Peer Table
+	PeerTable := make(map[string]*p2p.NetworkPeer, len(Global.Peers))
+	PeerTablePtr = &PeerTable
 	// Setup reverse lookup hash map for authentication.
-	RevLookup = make(map[string]bool, len(Global.Peers))
-	for _, id := range Global.Peers {
-		RevLookup[id.ID] = true
+	RevLookup = make(map[string]string, len(Global.Peers))
+	for ip, id := range Global.Peers {
+		RevLookup[id.ID] = ip
 	}
 
 	fmt.Println("[+] Creating TUN Device")
@@ -116,23 +118,32 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 	port := Global.Interface.ListenPort
 
 	// Create P2P Node
-	host, dht, err := p2p.CreateNode(ctx,
+	node, err := p2p.CreateNode(ctx,
 		Global.Interface.PrivateKey,
-		port,
-		streamHandler)
+		port)
 	checkErr(err)
 
-	// Setup Peer Table for Quick Packet --> Dest ID lookup
-	peerTable := make(map[string]peer.ID)
+	// Setup peerTable and start goroutines for handling peer IO
+	// peerTable maps an ip address string to a peer
 	for ip, id := range Global.Peers {
-		peerTable[ip], err = peer.Decode(id.ID)
-		checkErr(err)
+		np := new(p2p.NetworkPeer)
+		np.IPaddr = ip
+		np.Id = id.ID
+		np.PeerID = peer.ID(id.ID)
+		np.WriteChan = make(chan []byte)
+		np.ReadChan = make(chan []byte)
+		np.StreamChan = make(chan network.Stream) //stream is established by discovery routine
+		PeerTable[ip] = np
+		go handlePeerIO(np)
 	}
+
+	// Setup Hyprspace Stream Handler
+	node.Host.SetStreamHandler(p2p.Protocol, streamHandler)
 
 	fmt.Println("[+] Setting Up Node Discovery via DHT")
 	// Setup P2P Discovery
-	go p2p.Discover(ctx, host, dht, Global.Interface.DiscoverKey, peerTable)
-	go prettyDiscovery(ctx, host, peerTable)
+	go p2p.Discover(ctx, node, Global.Interface.DiscoverKey, PeerTable)
+	//go prettyDiscovery(ctx, host, PeerTable)
 
 	go func() {
 		// Wait for a SIGINT or SIGTERM signal
@@ -142,7 +153,7 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 		fmt.Println("Received signal, shutting down...")
 
 		// Shut the node down
-		if err := host.Close(); err != nil {
+		if err := node.Host.Close(); err != nil {
 			panic(err)
 		}
 		os.Exit(0)
@@ -154,83 +165,71 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 	fmt.Println("[+] Network Setup Complete...Waiting on Node Discovery")
 	// Listen For New Packets on TUN Interface
 	packet := make([]byte, 1420)
-	var stream network.Stream
 	var header *ipv4.Header
 	var plen int
+	//read packets and send them to peer channels
 	for {
 		plen, err = iface.Read(packet)
 		checkErr(err)
 		header, _ = ipv4.ParseHeader(packet)
-		_, ok := Global.Peers[header.Dst.String()]
+
+		p, ok := PeerTable[header.Dst.String()]
 		if ok {
-			stream, err = host.NewStream(ctx, peerTable[header.Dst.String()], p2p.Protocol)
-			if err != nil {
-				log.Println(err)
-				continue
-			}
-			stream.Write(packet[:plen])
-			stream.Close()
+			p.WriteChan <- packet[:plen]
 		}
 	}
+}
+
+// Should be started as a go routine for each peer
+func handlePeerIO(p *p2p.NetworkPeer) {
+	var stream network.Stream = nil
+
+	for {
+		select {
+		case bytes, ok := <-p.WriteChan:
+			if ok && stream != nil {
+				stream.Write(bytes[:])
+			}
+		case bytes, ok := <-p.ReadChan:
+			if ok && stream != nil {
+				iface.Write(bytes) //write packet from peer to network interface
+			}
+		case stream = <-p.StreamChan:
+			fmt.Println("[+]", p.IPaddr, "connected")
+		}
+	}
+}
+
+func streamHandler(stream network.Stream) {
+	// If the remote node ID isn't in the list of known nodes don't respond.
+	ip, ok := RevLookup[stream.Conn().RemotePeer().Pretty()]
+	if !ok {
+		fmt.Println("Invalid peer", stream.Conn().RemotePeer().Pretty())
+		stream.Reset()
+		return
+	}
+	networkPeer := (*PeerTablePtr)[ip]
+
+	// Send the stream
+	networkPeer.StreamChan <- stream
+
+	go p2p.ReadFromPeer(stream, networkPeer)
 }
 
 func createDaemon(out chan<- error) {
 	path, err := os.Executable()
 	checkErr(err)
-	// Create Pipe to monitor for daemon output.
-	r, w, err := os.Pipe()
-	checkErr(err)
+
 	// Create Sub Process
 	process, err := os.StartProcess(
 		path,
 		append(os.Args, "--foreground"),
 		&os.ProcAttr{
-			Files: []*os.File{nil, w, w},
+			Files: []*os.File{nil, nil, nil},
 		},
 	)
 	checkErr(err)
-	scanner := bufio.NewScanner(r)
-	count := 0
-	for scanner.Scan() && count < (4+len(Global.Peers)) {
-		fmt.Println(scanner.Text())
-		count++
-	}
-	fmt.Println(scanner.Text())
-	err = process.Release()
-	checkErr(err)
-	if count < 4 {
-		out <- errors.New("failed to create daemon")
-	}
+
+	process.Release()
 	out <- nil
-}
-
-func streamHandler(stream network.Stream) {
-	// If the remote node ID isn't in the list of known nodes don't respond.
-	if _, ok := RevLookup[stream.Conn().RemotePeer().Pretty()]; !ok {
-		stream.Reset()
-	}
-	io.Copy(iface.ReadWriteCloser, stream)
-	stream.Close()
-}
-
-func prettyDiscovery(ctx context.Context, node host.Host, peerTable map[string]peer.ID) {
-	tempTable := make(map[string]peer.ID, len(peerTable))
-	for ip, id := range peerTable {
-		tempTable[ip] = id
-	}
-	for len(tempTable) > 0 {
-		for ip, id := range tempTable {
-			stream, err := node.NewStream(ctx, id, p2p.Protocol)
-			if err != nil && (strings.HasPrefix(err.Error(), "failed to dial") ||
-				strings.HasPrefix(err.Error(), "no addresses")) {
-				time.Sleep(5 * time.Second)
-				continue
-			}
-			if err == nil {
-				fmt.Printf("[+] Connection to %s Successful. Network Ready.\n", ip)
-				stream.Close()
-			}
-			delete(tempTable, ip)
-		}
-	}
 }
