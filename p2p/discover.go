@@ -62,7 +62,7 @@ func findConnect(ctx context.Context, node *Libp2pNode, rendezvous string, peerT
 		if node.Host.Network().Connectedness(p.ID) != network.Connected {
 			_, err := node.Host.Network().DialPeer(ctx, p.ID)
 			// Dont connect to peer if there is already an open hyprspace stream
-			// This prevents scenario where two peers dial each other simultaneously
+			// This somewhat prevents scenario where two peers dial each other simultaneously.
 			// If we get two streams its not the end of the world, though
 			if err != nil || peerHasStreams(node, networkPeer) {
 				fmt.Println("Error dialing:", err)
@@ -80,6 +80,7 @@ func findConnect(ctx context.Context, node *Libp2pNode, rendezvous string, peerT
 	}
 }
 
+// Returns true if a hyprspace stream is already open with a peer
 func peerHasStreams(node *Libp2pNode, networkPeer *NetworkPeer) (hasStreams bool) {
 	conns := node.Host.Network().ConnsToPeer(networkPeer.PeerID)
 	for _, con := range conns {
