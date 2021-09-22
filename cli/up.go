@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -113,7 +115,29 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 
 	fmt.Println("[+] Creating LibP2P Node")
 
+	// Check that the listener port is available.
+	var ln net.Listener
 	port := Global.Interface.ListenPort
+	if port != 8001 {
+		ln, err = net.Listen("tcp", ":"+strconv.Itoa(port))
+		if err != nil {
+			checkErr(errors.New("could not create node, listen port already in use by something else"))
+		}
+	} else {
+		for {
+			ln, err = net.Listen("tcp", ":"+strconv.Itoa(port))
+			if err == nil {
+				break
+			}
+			if port >= 65535 {
+				checkErr(errors.New("failed to find open port"))
+			}
+			port++
+		}
+	}
+	if ln != nil {
+		ln.Close()
+	}
 
 	// Create P2P Node
 	host, dht, err := p2p.CreateNode(ctx,
