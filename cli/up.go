@@ -138,6 +138,7 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 	if ln != nil {
 		ln.Close()
 	}
+
 	// Create P2P Node
 	host, dht, err := p2p.CreateNode(ctx,
 		Global.Interface.PrivateKey,
