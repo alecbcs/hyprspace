@@ -4,12 +4,14 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
-	"github.com/ipfs/go-datastore"
 	"github.com/libp2p/go-libp2p"
+	connmgr "github.com/libp2p/go-libp2p-connmgr"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/libp2p/go-libp2p-core/routing"
 	discovery "github.com/libp2p/go-libp2p-discovery"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	libp2pquic "github.com/libp2p/go-libp2p-quic-transport"
@@ -44,6 +46,14 @@ func CreateNode(ctx context.Context, inputKey string, port int) (node *Libp2pNod
 		return
 	}
 
+	// Setup connection manager
+	connMgr := connmgr.NewConnManager(
+		100,
+		400,
+		time.Minute,
+	)
+
+	// Listen addresses
 	ip6quic := fmt.Sprintf("/ip6/::/udp/%d/quic", port)
 	ip4quic := fmt.Sprintf("/ip4/0.0.0.0/udp/%d/quic", port)
 
@@ -56,16 +66,20 @@ func CreateNode(ctx context.Context, inputKey string, port int) (node *Libp2pNod
 		libp2p.Identity(privateKey),
 		libp2p.DefaultSecurity,
 		libp2p.NATPortMap(),
+		libp2p.EnableNATService(),
 		libp2p.Transport(libp2pquic.NewTransport),
 		libp2p.Transport(tcp.NewTCPTransport),
+		libp2p.EnableAutoRelay(),
+		libp2p.ConnectionManager(connMgr),
 		libp2p.FallbackDefaults,
+		libp2p.Routing(func(h host.Host) (routing.PeerRouting, error) {
+			node.KadDHT, err = dht.New(ctx, h)
+			return node.KadDHT, err
+		}),
 	)
 	if err != nil {
 		return
 	}
-
-	// Create DHT Subsystem
-	node.KadDHT = dht.NewDHTClient(ctx, node.Host, datastore.NewMapDatastore())
 
 	// Define Bootstrap Nodes.
 	peers := []string{

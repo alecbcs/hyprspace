@@ -9,6 +9,7 @@ require (
 	github.com/ipfs/go-datastore v0.4.5
 	github.com/kr/text v0.2.0 // indirect
 	github.com/libp2p/go-libp2p v0.14.1
+	github.com/libp2p/go-libp2p-connmgr v0.2.4 // indirect
 	github.com/libp2p/go-libp2p-core v0.8.6
 	github.com/libp2p/go-libp2p-discovery v0.5.0
 	github.com/libp2p/go-libp2p-kad-dht v0.12.1

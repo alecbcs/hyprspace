@@ -36,10 +36,15 @@ func Discover(ctx context.Context, node *Libp2pNode, rendezvous string, peerTabl
 	ticker := time.NewTicker(time.Second * 5)
 	defer ticker.Stop()
 
+	republishTicker := time.NewTicker(time.Hour * 3)
+	defer republishTicker.Stop()
+
 	for {
 		select {
 		case <-ctx.Done():
 			return
+		case <-republishTicker.C:
+			node.Discovery.Advertise(ctx, rendezvous)
 		case <-ticker.C:
 			findConnect(ctx, node, rendezvous, peersByID)
 		}
