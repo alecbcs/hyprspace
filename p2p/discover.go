@@ -3,8 +3,10 @@ package p2p
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
+	"github.com/libp2p/go-libp2p-core/event"
 	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/peer"
 	discovery "github.com/libp2p/go-libp2p-discovery"
@@ -30,8 +32,14 @@ func Discover(ctx context.Context, node *Libp2pNode, rendezvous string, peerTabl
 		peersByID[p.Id] = p
 	}
 
+	// We need to monitor reachability here. If our node is not reachable and therefore has a
+	// relay listen addr, and we have another peer who is publically reachable we want
+	// to dial them and have a direct connection, rather than them dialing us over the relay.
+	// I think this wont be necessary when p2p-circuit v2 is implemented.
+	var reachable bool = true
+
 	// Do it once before the timer starts
-	findConnect(ctx, node, rendezvous, peersByID)
+	findConnect(ctx, node, rendezvous, peersByID, reachable)
 
 	ticker := time.NewTicker(time.Second * 5)
 	defer ticker.Stop()
@@ -43,16 +51,29 @@ func Discover(ctx context.Context, node *Libp2pNode, rendezvous string, peerTabl
 		select {
 		case <-ctx.Done():
 			return
+		case ev, ok := <-node.SubReachability.Out():
+			if !ok {
+				return
+			}
+			evt, ok := ev.(event.EvtLocalReachabilityChanged)
+			if !ok {
+				return
+			}
+			if evt.Reachability == network.ReachabilityPublic {
+				reachable = true
+			} else {
+				reachable = false
+			}
 		case <-republishTicker.C:
 			node.Discovery.Advertise(ctx, rendezvous)
 		case <-ticker.C:
-			findConnect(ctx, node, rendezvous, peersByID)
+			findConnect(ctx, node, rendezvous, peersByID, reachable)
 		}
 	}
 }
 
 // Finds peers providing the rendesvous string and initiates a hyprspace connection with them
-func findConnect(ctx context.Context, node *Libp2pNode, rendezvous string, peerTable map[string]*NetworkPeer) {
+func findConnect(ctx context.Context, node *Libp2pNode, rendezvous string, peerTable map[string]*NetworkPeer, reachable bool) {
 	peers, err := discovery.FindPeers(ctx, node.Discovery, rendezvous)
 	if err != nil {
 		fmt.Println(err)
@@ -65,7 +86,12 @@ func findConnect(ctx context.Context, node *Libp2pNode, rendezvous string, peerT
 		}
 
 		if node.Host.Network().Connectedness(p.ID) != network.Connected {
+			// Dont dial this peer if we are reachable and it is listening on a relay
+			if peerHasRelay(p) && reachable {
+				continue
+			}
 			_, err := node.Host.Network().DialPeer(ctx, p.ID)
+
 			// Dont connect to peer if there is already an open hyprspace stream
 			// This somewhat prevents scenario where two peers dial each other simultaneously.
 			// If we get two streams its not the end of the world, though
@@ -85,6 +111,24 @@ func findConnect(ctx context.Context, node *Libp2pNode, rendezvous string, peerT
 	}
 }
 
+// Reads data from the stream and sends it to p.ReadChan
+func ReadFromPeer(stream network.Stream, p *NetworkPeer) {
+	var bytes []byte = make([]byte, 4000)
+
+	for {
+		i, err := stream.Read(bytes[:])
+
+		if err != nil {
+			break
+		}
+		if len(bytes) > 0 {
+			p.ReadChan <- bytes[:i]
+		}
+	}
+	stream.Reset()
+	fmt.Println("[-]", p.IPaddr, "disconnected")
+}
+
 // Returns true if a hyprspace stream is already open with a peer
 func peerHasStreams(node *Libp2pNode, networkPeer *NetworkPeer) (hasStreams bool) {
 	conns := node.Host.Network().ConnsToPeer(networkPeer.PeerID)
@@ -98,19 +142,11 @@ func peerHasStreams(node *Libp2pNode, networkPeer *NetworkPeer) (hasStreams bool
 	return false
 }
 
-// Reads data from the stream and sends it to p.ReadChan
-func ReadFromPeer(stream network.Stream, p *NetworkPeer) {
-	var bytes []byte = make([]byte, 4000)
-	for {
-		i, err := stream.Read(bytes[:])
-
-		if err != nil {
-			break
-		}
-		if len(bytes) > 0 {
-			p.ReadChan <- bytes[:i]
+func peerHasRelay(p peer.AddrInfo) bool {
+	for _, ma := range p.Addrs {
+		if strings.HasSuffix(ma.String(), "p2p-circuit") {
+			return true
 		}
 	}
-	stream.Reset()
-	fmt.Println("[-]", p.IPaddr, "disconnected")
+	return false
 }

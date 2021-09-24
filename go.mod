@@ -4,6 +4,7 @@ go 1.16
 
 require (
 	github.com/DataDrake/cli-ng/v2 v2.0.2
+	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/hashicorp/go-version v1.2.1 // indirect
 	github.com/inconshreveable/go-update v0.0.0-20160112193335-8152e7eb6ccf
 	github.com/ipfs/go-datastore v0.4.6
@@ -22,6 +23,7 @@ require (
 	github.com/tcnksm/go-latest v0.0.0-20170313132115-e3007ae9052e
 	go.opencensus.io v0.23.0 // indirect
 	golang.org/x/net v0.0.0-20210813160813-60bc85c4be6d
+	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0
 	honnef.co/go/tools v0.0.1-2020.1.4 // indirect
 )
