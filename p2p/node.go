@@ -13,8 +13,8 @@ import (
 	"github.com/libp2p/go-libp2p-core/routing"
 	discovery "github.com/libp2p/go-libp2p-discovery"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
+	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	libp2pquic "github.com/libp2p/go-libp2p-quic-transport"
-	"github.com/libp2p/go-tcp-transport"
 )
 
 type Libp2pNode struct {
@@ -30,6 +30,10 @@ type Libp2pNode struct {
 	// Represents the peer discovery service
 	Discovery *discovery.RoutingDiscovery
 
+	// Represents the PubSub Handler
+	PubSub *pubsub.PubSub
+
+	// NAT reachability events
 	SubReachability event.Subscription
 }
 
@@ -68,7 +72,7 @@ func CreateNode(ctx context.Context, inputKey string, port int) (node *Libp2pNod
 		libp2p.NATPortMap(),
 		libp2p.EnableNATService(),
 		libp2p.Transport(libp2pquic.NewTransport),
-		libp2p.Transport(tcp.NewTCPTransport),
+		//libp2p.Transport(tcp.NewTCPTransport),
 		libp2p.EnableAutoRelay(),
 		libp2p.ConnectionManager(connMgr),
 		libp2p.Routing(func(h host.Host) (routing.PeerRouting, error) {
@@ -88,5 +92,22 @@ func CreateNode(ctx context.Context, inputKey string, port int) (node *Libp2pNod
 	// Setup routing discovery
 	node.Discovery = discovery.NewRoutingDiscovery(node.KadDHT)
 
+	// Create a PubSub handler with the routing discovery
+	node.PubSub, err = setupPubSub(ctx, node.Host, node.Discovery)
+
 	return
+}
+
+// A function that generates a PubSub Handler object and returns it
+// Requires a node host and a routing discovery service.
+func setupPubSub(ctx context.Context, nodehost host.Host, routingdiscovery *discovery.RoutingDiscovery) (*pubsub.PubSub, error) {
+	// Create a new PubSub service which uses a GossipSub router
+	pubsubhandler, err := pubsub.NewGossipSub(ctx, nodehost, pubsub.WithDiscovery(routingdiscovery))
+	// Handle any potential error
+	if err != nil {
+		return nil, err
+	}
+
+	// Return the PubSub handler
+	return pubsubhandler, nil
 }
