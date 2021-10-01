@@ -6,32 +6,12 @@ import (
 	"encoding/hex"
 	"fmt"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/peer"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 )
-
-type ThreadSafe struct {
-	mu   sync.RWMutex
-	data interface{}
-}
-
-func (r *ThreadSafe) Set(data interface{}) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	r.data = data
-}
-
-func (r *ThreadSafe) Get() interface{} {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-
-	return r.data
-}
 
 // Discover starts up a DHT based discovery system finding and adding nodes with the same rendezvous string.
 // The rendesvous string is necessary for distinguishing which network a peer is on.

@@ -47,8 +47,6 @@ type NetworkPeer struct {
 	ReadChan chan []byte
 	// Channel used by discovery & streamhandler to send new streams to IO handler routines
 	StreamChan chan network.Stream
-	// Connectedness threadsafe boolean
-	Connected *ThreadSafe
 }
 
 var (

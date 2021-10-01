@@ -23,7 +23,7 @@ func (h *ShutdownHandler) Execute(req ShutdownReq, res *ShutdownResp) (err error
 		// Gracefully close all active interfaces and kill daemon
 		fmt.Println("Shutting down daemon")
 		for iface, h := range h.D.Interfaces {
-			fmt.Println("Shutting down", iface)
+			fmt.Println("[-] Shutting down", iface)
 			h.Shutdown()
 		}
 
@@ -40,6 +40,6 @@ func (h *ShutdownHandler) Execute(req ShutdownReq, res *ShutdownResp) (err error
 		res.Error = errT.Error()
 	}
 	delete(h.D.Interfaces, req.Interface)
-	fmt.Println("Shut down interface", req.Interface)
+	fmt.Println("[-] Shut down interface", req.Interface)
 	return nil
 }
