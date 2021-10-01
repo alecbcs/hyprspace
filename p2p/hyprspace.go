@@ -127,8 +127,6 @@ func Up(interfaceName string, configPath string) (h *Hyprspace, err error) {
 		np.WriteChan = make(chan []byte)
 		np.ReadChan = make(chan []byte)
 		np.StreamChan = make(chan network.Stream) //stream is established by discovery routine
-		np.Connected = new(ThreadSafe)
-		np.Connected.Set(false)
 		h.PeerTable[ip] = np
 		go handlePeerIO(h, np)
 	}

@@ -29,6 +29,9 @@ var (
 
 // Runs the daemon in it's own process
 func StartDaemonProcess() (err error) {
+	if os.Geteuid() != 0 {
+		return errors.New("daemon must be started as root")
+	}
 	path, err := os.Executable()
 	process, err := os.StartProcess(
 		path,
@@ -46,6 +49,10 @@ func StartDaemonProcess() (err error) {
 
 // Starts the daemon in the current program
 func Run(out chan error) {
+	if os.Geteuid() != 0 {
+		out <- errors.New("daemon must be started as root")
+		return
+	}
 	// Create a TCP listener that will listen on PORT
 	listener, err := net.Listen("tcp", "localhost:"+strconv.Itoa(PORT))
 	if err != nil {
@@ -137,6 +144,7 @@ func isDaemonRunning() bool {
 // Brings an interface up
 func UpInterface(iface string, configPath string) (err error) {
 	if !isDaemonRunning() {
+
 		err = StartDaemonProcess()
 		if err != nil {
 			return
