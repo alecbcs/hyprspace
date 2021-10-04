@@ -16,7 +16,8 @@ type Config struct {
 type Interface struct {
 	Name        string   `yaml:"name"`
 	ID          string   `yaml:"id"`
-	ListenPort  int      `yaml:"listen_port"`
+	ListenPort  int      `yaml:"listen_port" default:"8001"`
+	ListenTCP   int      `yaml:"listen_tcp" default:"8001"`
 	Address     string   `yaml:"address"`
 	Transports  []string `yaml:"transports" default:"[quic, tcp]"`
 	AutoRelay   bool     `yaml:"autorelay" default:"false"`

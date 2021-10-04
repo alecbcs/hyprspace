@@ -106,13 +106,9 @@ func Up(interfaceName string, configPath string) (h *Hyprspace, err error) {
 	// Setup System Context
 	h.Ctx = context.Background()
 
-	port := h.Global.Interface.ListenPort
-
 	// Create P2P Node
 	fmt.Println("[+] Starting interface", h.Name)
-	h.Node, err = CreateNode(h.Ctx,
-		h.Global.Interface,
-		port)
+	h.Node, err = CreateNode(h.Ctx, h.Global.Interface)
 
 	// Setup peerTable and start goroutines for handling peer IO
 	// peerTable maps an ip address string to a peer

@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/DataDrake/cli-ng/v2/cmd"
 	"github.com/hyprspace/hyprspace/config"
@@ -44,7 +45,7 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 	args := c.Args.(*UpArgs)
 
 	// Parse Command Flags
-	//flags := c.Flags.(*UpFlags)
+	flags := c.Flags.(*UpFlags)
 
 	// Parse Global Config Flag for Custom Config Path
 	configPath := r.Flags.(*GlobalFlags).Config
@@ -52,11 +53,56 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 		configPath = "/etc/hyprspace/" + args.InterfaceName + ".yaml"
 	}
 
-	err := daemon.UpInterface(args.InterfaceName, configPath)
+	if flags.Foreground { // Start in foreground
+		if os.Geteuid() != 0 {
+			fmt.Println("daemon must be started as root")
+			return
+		}
+		out := make(chan error)
+		go daemon.Run(out)
 
-	if err != nil && err.Error() != "" {
-		fmt.Println("Failed to start interface:", err)
-	} else {
-		fmt.Println("[+] Started hyprspace interface", args.InterfaceName)
+		startUpProcess(args.InterfaceName, configPath)
+
+		select {
+		case err := <-out:
+			if err == nil {
+				fmt.Println("Daemon shutting down")
+				os.Exit(0)
+			}
+			fmt.Println(err)
+			os.Exit(1)
+		}
+	} else { // Start in background
+
+		err := daemon.UpInterface(args.InterfaceName, configPath)
+
+		if err != nil && err.Error() != "" {
+			fmt.Println("Failed to start interface:", err)
+		} else {
+			fmt.Println("[+] Started hyprspace interface", args.InterfaceName)
+		}
 	}
+}
+
+// Brings up a hyprspace interface from a new process
+func startUpProcess(iface string, configPath string) (err error) {
+	args := []string{"hyprspace", "up", iface}
+
+	if configPath != "" {
+		args = append(args, "-c", configPath)
+	}
+
+	path, err := os.Executable()
+	process, err := os.StartProcess(
+		path,
+		args,
+		&os.ProcAttr{
+			Files: []*os.File{nil, nil, nil},
+		},
+	)
+	if err != nil {
+		return
+	}
+	err = process.Release()
+	return
 }

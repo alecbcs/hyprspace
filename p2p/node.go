@@ -43,8 +43,11 @@ type Libp2pNode struct {
 // Protocol is a descriptor for the Hyprspace P2P Protocol.
 const Protocol = "/hyprspace/0.0.2"
 
+// If ports are not specified the default will be used
+const DEFAULT_PORT int = 8001
+
 // CreateNode creates an internal Libp2p nodes and returns it and it's DHT Discovery service.
-func CreateNode(ctx context.Context, cfg config.Interface, port int) (node *Libp2pNode, err error) {
+func CreateNode(ctx context.Context, cfg config.Interface) (node *Libp2pNode, err error) {
 	node = new(Libp2pNode)
 
 	// Unmarshal Private Key
@@ -75,11 +78,11 @@ func CreateNode(ctx context.Context, cfg config.Interface, port int) (node *Libp
 	}
 
 	// Listen addresses
-	ip6quic := fmt.Sprintf("/ip6/::/udp/%d/quic", port)
-	ip4quic := fmt.Sprintf("/ip4/0.0.0.0/udp/%d/quic", port)
+	ip6quic := fmt.Sprintf("/ip6/::/udp/%d/quic", cfg.ListenPort)
+	ip4quic := fmt.Sprintf("/ip4/0.0.0.0/udp/%d/quic", cfg.ListenPort)
 
-	ip6tcp := fmt.Sprintf("/ip6/::/tcp/%d", port)
-	ip4tcp := fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", port)
+	ip6tcp := fmt.Sprintf("/ip6/::/tcp/%d", cfg.ListenTCP)
+	ip4tcp := fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", cfg.ListenTCP)
 
 	// Create libp2p node
 	node.Host, err = libp2p.New(ctx,
