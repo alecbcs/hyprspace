@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"time"
 
 	"github.com/hyprspace/hyprspace/config"
 	"github.com/hyprspace/hyprspace/tun"
@@ -190,21 +189,54 @@ func interfaceListen(h *Hyprspace) {
 // Should be started as a go routine for each peer
 func handlePeerIO(h *Hyprspace, p *NetworkPeer) {
 	var stream network.Stream = nil
+	streamChanRead := make(chan network.Stream)
+	streamChanWrite := make(chan network.Stream)
+
+	// Start read and write routines so that one is not prioritized over the other
+	go handleRead(h, p, streamChanRead)
+	go handleWrite(h, p, streamChanWrite)
+
 	for {
 		select {
 		case stream = <-p.StreamChan:
+			streamChanRead <- stream
+			streamChanWrite <- stream
 			if stream == nil {
 				return // Shutdown
 			}
 			fmt.Println("[+]", h.Name, p.IPaddr, "connected")
-		case bytes, ok := <-p.WriteChan:
-			if ok && stream != nil {
-				stream.Write(bytes[:])
+		}
+	}
+}
+
+func handleRead(h *Hyprspace, p *NetworkPeer, streamChan chan network.Stream) {
+	var stream network.Stream = nil
+	for {
+		select {
+		case stream = <-streamChan:
+			if stream == nil {
+				return // Shutdown
 			}
 		case bytes, ok := <-p.ReadChan: // ReadChan is written to by the streamHandler
 			if ok && stream != nil {
 				// Write packet from peer to network interface
 				h.iface.Write(bytes)
+			}
+		}
+	}
+}
+
+func handleWrite(h *Hyprspace, p *NetworkPeer, streamChan chan network.Stream) {
+	var stream network.Stream = nil
+	for {
+		select {
+		case stream = <-streamChan:
+			if stream == nil {
+				return // Shutdown
+			}
+		case bytes, ok := <-p.WriteChan:
+			if ok && stream != nil {
+				stream.Write(bytes[:])
 			}
 		}
 	}
@@ -234,7 +266,7 @@ func ReadFromPeer(h *Hyprspace, stream network.Stream, ip string) {
 			networkPeer.ReadChan <- bytes[:i]
 		} else {
 			// Ideally read would block, but this is to reduce cpu
-			time.Sleep(time.Millisecond * 1)
+			//time.Sleep(time.Millisecond * 1)
 		}
 	}
 	stream.Reset()
