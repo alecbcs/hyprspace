@@ -40,9 +40,6 @@ type Libp2pNode struct {
 	//SubReachability event.Subscription
 }
 
-// Protocol is a descriptor for the Hyprspace P2P Protocol.
-const Protocol = "/hyprspace/0.0.2"
-
 // If ports are not specified the default will be used
 const DEFAULT_PORT int = 8001
 

@@ -103,7 +103,6 @@ func connect(ctx context.Context, h *Hyprspace, p peer.ID, networkPeer *NetworkP
 	}
 	stream, err := node.Host.NewStream(ctx, p, Protocol)
 	if err != nil {
-		fmt.Println("Error opening stream:", err)
 		return
 	}
 	stream.Write([]byte{}) //this has to happen apparently for the streamhandler to be called on the other side
