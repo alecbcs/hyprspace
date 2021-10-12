@@ -33,6 +33,8 @@ func init() {
 	cmd.Register(&Down)
 	cmd.Register(&Update)
 	cmd.Register(&cmd.Version)
+	cmd.Register(&Daemon)
+	cmd.Register(&Peers)
 }
 
 func checkErr(err error) {

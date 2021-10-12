@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/DataDrake/cli-ng/v2/cmd"
-	"github.com/hyprspace/hyprspace/tun"
+	"github.com/hyprspace/hyprspace/daemon"
 )
 
 // Down brings down a Hyprspace interface and removes it from the system.
@@ -26,7 +26,10 @@ func DownRun(r *cmd.Root, c *cmd.Sub) {
 	// Parse Command Args
 	args := c.Args.(*DownArgs)
 
-	fmt.Println("[+] ip link delete dev " + args.InterfaceName)
-	err := tun.Delete(args.InterfaceName)
-	checkErr(err)
+	err := daemon.DownInterface(args.InterfaceName)
+	if err != nil && err.Error() != "" {
+		fmt.Println("Failed to bring down interface:", err)
+	} else {
+		fmt.Println("[-] Shutdown hyprspace interface", args.InterfaceName)
+	}
 }
