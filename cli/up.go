@@ -27,9 +27,6 @@ import (
 )
 
 var (
-	// Global is the global interface configuration for the
-	// application instance.
-	Global config.Config
 	// iface is the tun device used to pass packets between
 	// Hyprspace and the user's machine.
 	iface *water.Interface
@@ -73,13 +70,13 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 	}
 
 	// Read in configuration from file.
-	Global, err := config.Read(configPath)
+	cfg, err := config.Read(configPath)
 	checkErr(err)
 
 	if !flags.Foreground {
 		// Make results chan
 		out := make(chan error)
-		go createDaemon(out)
+		go createDaemon(cfg, out)
 
 		select {
 		case err = <-out:
@@ -94,21 +91,21 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 	}
 
 	// Setup reverse lookup hash map for authentication.
-	RevLookup = make(map[string]bool, len(Global.Peers))
-	for _, id := range Global.Peers {
+	RevLookup = make(map[string]bool, len(cfg.Peers))
+	for _, id := range cfg.Peers {
 		RevLookup[id.ID] = true
 	}
 
 	fmt.Println("[+] Creating TUN Device")
 	// Create new TUN device
-	iface, err = tun.New(Global.Interface.Name)
+	iface, err = tun.New(cfg.Interface.Name)
 	if err != nil {
 		checkErr(errors.New("interface already in use"))
 	}
 	// Set TUN MTU
-	tun.SetMTU(Global.Interface.Name, 1420)
+	tun.SetMTU(cfg.Interface.Name, 1420)
 	// Add Address to Interface
-	tun.SetAddress(Global.Interface.Name, Global.Interface.Address)
+	tun.SetAddress(cfg.Interface.Name, cfg.Interface.Address)
 
 	// Setup System Context
 	ctx := context.Background()
@@ -117,7 +114,7 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 
 	// Check that the listener port is available.
 	var ln net.Listener
-	port := Global.Interface.ListenPort
+	port := cfg.Interface.ListenPort
 	if port != 8001 {
 		ln, err = net.Listen("tcp", ":"+strconv.Itoa(port))
 		if err != nil {
@@ -141,21 +138,21 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 
 	// Create P2P Node
 	host, dht, err := p2p.CreateNode(ctx,
-		Global.Interface.PrivateKey,
+		cfg.Interface.PrivateKey,
 		port,
 		streamHandler)
 	checkErr(err)
 
 	// Setup Peer Table for Quick Packet --> Dest ID lookup
 	peerTable := make(map[string]peer.ID)
-	for ip, id := range Global.Peers {
+	for ip, id := range cfg.Peers {
 		peerTable[ip], err = peer.Decode(id.ID)
 		checkErr(err)
 	}
 
 	fmt.Println("[+] Setting Up Node Discovery via DHT")
 	// Setup P2P Discovery
-	go p2p.Discover(ctx, host, dht, Global.Interface.DiscoverKey, peerTable)
+	go p2p.Discover(ctx, host, dht, peerTable)
 	go prettyDiscovery(ctx, host, peerTable)
 
 	go func() {
@@ -173,7 +170,7 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 	}()
 
 	// Bring Up TUN Device
-	tun.Up(Global.Interface.Name)
+	tun.Up(cfg.Interface.Name)
 
 	fmt.Println("[+] Network Setup Complete...Waiting on Node Discovery")
 	// Listen For New Packets on TUN Interface
@@ -185,7 +182,7 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 		plen, err = iface.Read(packet)
 		checkErr(err)
 		header, _ = ipv4.ParseHeader(packet)
-		_, ok := Global.Peers[header.Dst.String()]
+		_, ok := cfg.Peers[header.Dst.String()]
 		if ok {
 			stream, err = host.NewStream(ctx, peerTable[header.Dst.String()], p2p.Protocol)
 			if err != nil {
@@ -198,7 +195,7 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 	}
 }
 
-func createDaemon(out chan<- error) {
+func createDaemon(cfg config.Config, out chan<- error) {
 	path, err := os.Executable()
 	checkErr(err)
 	// Create Pipe to monitor for daemon output.
@@ -215,14 +212,15 @@ func createDaemon(out chan<- error) {
 	checkErr(err)
 	scanner := bufio.NewScanner(r)
 	count := 0
-	for scanner.Scan() && count < (4+len(Global.Peers)) {
+	for count < len(cfg.Peers) && scanner.Scan() {
 		fmt.Println(scanner.Text())
-		count++
+		if strings.HasPrefix(scanner.Text(), "[+] Connection to") {
+			count++
+		}
 	}
-	fmt.Println(scanner.Text())
 	err = process.Release()
 	checkErr(err)
-	if count < 4 {
+	if count < len(cfg.Peers) {
 		out <- errors.New("failed to create daemon")
 	}
 	out <- nil

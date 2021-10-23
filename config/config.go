@@ -14,12 +14,11 @@ type Config struct {
 
 // Interface defines all of the fields that a local node needs to know about itself!
 type Interface struct {
-	Name        string `yaml:"name"`
-	ID          string `yaml:"id"`
-	ListenPort  int    `yaml:"listen_port"`
-	Address     string `yaml:"address"`
-	DiscoverKey string `yaml:"discover_key"`
-	PrivateKey  string `yaml:"private_key"`
+	Name       string `yaml:"name"`
+	ID         string `yaml:"id"`
+	ListenPort int    `yaml:"listen_port"`
+	Address    string `yaml:"address"`
+	PrivateKey string `yaml:"private_key"`
 }
 
 // Peer defines a peer in the configuration. We might add more to this later.
@@ -35,12 +34,11 @@ func Read(path string) (result Config, err error) {
 	}
 	result = Config{
 		Interface: Interface{
-			Name:        "hs0",
-			ListenPort:  8001,
-			Address:     "10.1.1.1",
-			ID:          "",
-			DiscoverKey: "",
-			PrivateKey:  "",
+			Name:       "hs0",
+			ListenPort: 8001,
+			Address:    "10.1.1.1",
+			ID:         "",
+			PrivateKey: "",
 		},
 	}
 	err = yaml.Unmarshal(in, &result)

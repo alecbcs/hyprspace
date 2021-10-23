@@ -10,12 +10,10 @@ require (
 	github.com/kr/text v0.2.0 // indirect
 	github.com/libp2p/go-libp2p v0.14.1
 	github.com/libp2p/go-libp2p-core v0.8.6
-	github.com/libp2p/go-libp2p-discovery v0.5.0
 	github.com/libp2p/go-libp2p-kad-dht v0.12.1
-	github.com/libp2p/go-libp2p-quic-transport v0.12.0 // indirect
-	github.com/libp2p/go-tcp-transport v0.2.8 // indirect
+	github.com/libp2p/go-libp2p-quic-transport v0.12.0
+	github.com/libp2p/go-tcp-transport v0.2.8
 	github.com/multiformats/go-multiaddr v0.3.3
-	github.com/sethvargo/go-diceware v0.2.1
 	github.com/songgao/water v0.0.0-20200317203138-2b4b6d7c09d8
 	github.com/tcnksm/go-latest v0.0.0-20170313132115-e3007ae9052e
 	golang.org/x/net v0.0.0-20210428140749-89ef3d95e781
