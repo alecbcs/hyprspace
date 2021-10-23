@@ -69,7 +69,13 @@ brew install iproute2mac
 | `init`              | `i`     | Initialize an interface's configuration.                                   |
 | `up`                | `up`    | Create and Bring Up a Hyprspace Interface                                  |
 | `down  `            | `d`     | Bring Down and Delete A Hyprspace Interface                                |
-| `update`            | `upd`   | Have Hyprspace update its own binary to the latest release.                                      |
+| `update`            | `upd`   | Have Hyprspace update its own binary to the latest release.                |
+
+### Global Flags
+| Flag                |  Alias  | Description                                                                |
+| ------------------- | ------- | -------------------------------------------------------------------------- |
+| `--config`          | `-c`    | Specify the path to a hyprspace config for an interface.                   |
+
 
 ## Tutorial
 
@@ -130,20 +136,6 @@ peers:
 Notice here we'll have to pick one of our machines to be `10.1.1.1` 
 and the other to be `10.1.1.2`. Make sure to update the interface's IP
 address for the machine who needs to change to be `10.1.1.2`.
-
-### Update our Discover Key
-
-Looking in the interface's configuration you'll also notice a field called
-`discover_key` (right above the interface's private key). It doesn't matter
-which discovery key you pick but it much be the same for all of the nodes in your little cluster
-so that they can find each other.
-
-(*Note you can use different `discover_key`s with different interfaces on the same 
-host to create different isolated networks.)
-
-```yaml
-discover_key: fiftieth-dandelion-wronged-craftwork
-```
 
 ### Starting Up the Interfaces!
 Now that we've got our configs all sorted we can start up the two interfaces!

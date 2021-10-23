@@ -2,6 +2,7 @@ package p2p
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 
@@ -86,6 +87,7 @@ func CreateNode(ctx context.Context, inputKey string, port int, handler network.
 	// Let's connect to the bootstrap nodes first. They will tell us about the
 	// other nodes in the network.
 	var wg sync.WaitGroup
+	lock := sync.Mutex{}
 	count := 0
 	wg.Add(len(BootstrapPeers))
 	for _, peerInfo := range BootstrapPeers {
@@ -93,12 +95,18 @@ func CreateNode(ctx context.Context, inputKey string, port int, handler network.
 			defer wg.Done()
 			err := node.Connect(ctx, *peerInfo)
 			if err == nil {
+				lock.Lock()
 				count++
+				lock.Unlock()
+
 			}
 		}(peerInfo)
 	}
 	wg.Wait()
 
-	err = dhtOut.Bootstrap(ctx)
-	return
+	if count < 1 {
+		return node, dhtOut, errors.New("unable to bootstrap libp2p node")
+	}
+
+	return node, dhtOut, nil
 }

@@ -4,13 +4,11 @@ import (
 	"context"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/DataDrake/cli-ng/v2/cmd"
 	"github.com/hyprspace/hyprspace/config"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/crypto"
-	"github.com/sethvargo/go-diceware/diceware"
 	"gopkg.in/yaml.v2"
 )
 
@@ -47,19 +45,14 @@ func InitRun(r *cmd.Root, c *cmd.Sub) {
 	keyBytes, err := crypto.MarshalPrivateKey(host.Peerstore().PrivKey(host.ID()))
 	checkErr(err)
 
-	// Generate a random diceware discovery key
-	list, err := diceware.Generate(4)
-	checkErr(err)
-
 	// Setup an initial default command.
 	new := config.Config{
 		Interface: config.Interface{
-			Name:        args.InterfaceName,
-			ListenPort:  8001,
-			Address:     "10.1.1.1/24",
-			ID:          host.ID().Pretty(),
-			PrivateKey:  string(keyBytes),
-			DiscoverKey: strings.Join(list, "-"),
+			Name:       args.InterfaceName,
+			ListenPort: 8001,
+			Address:    "10.1.1.1/24",
+			ID:         host.ID().Pretty(),
+			PrivateKey: string(keyBytes),
 		},
 	}
 
