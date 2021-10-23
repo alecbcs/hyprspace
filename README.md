@@ -69,7 +69,13 @@ brew install iproute2mac
 | `init`              | `i`     | Initialize an interface's configuration.                                   |
 | `up`                | `up`    | Create and Bring Up a Hyprspace Interface                                  |
 | `down  `            | `d`     | Bring Down and Delete A Hyprspace Interface                                |
-| `update`            | `upd`   | Have Hyprspace update its own binary to the latest release.                                      |
+| `update`            | `upd`   | Have Hyprspace update its own binary to the latest release.                |
+
+### Global Flags
+| Flag                |  Alias  | Description                                                                |
+| ------------------- | ------- | -------------------------------------------------------------------------- |
+| `--config`          | `-c`    | Specify the path to a hyprspace config for an interface.                   |
+
 
 ## Tutorial
 
