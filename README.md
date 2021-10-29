@@ -65,7 +65,7 @@ brew install iproute2mac
 
 https://aur.archlinux.org/packages/hyprspace-git
 
-This AUR package is unofficial and is not controlled by me, please use at your own risk. The package may not be using the latest release so please run `sudo hyprspace update` once installed.
+This AUR package is unofficial and not controlled by me, please use at your own risk. The package may not be using the latest release so make sure to run `sudo hyprspace update` once installed.
 
 1. Run `paru -S hyprspace-git`, the package already takes care of the manual steps above.
 2. (Optional) Run `sudo hyprspace update`
