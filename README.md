@@ -52,12 +52,23 @@ brew install iproute2mac
 
 ### Installation
 
+#### Manually
+
 1. Go to Hyprspace Releases (over there -->)
 2. Copy the link for your corresponding OS and Architecture.
 3. Run `sudo mkdir -p /usr/local/bin/`
 4. Run `sudo curl -L "PATH-TO-RELEASE" -o /usr/local/bin/hyprspace`
 5. Run `sudo chmod a+x /usr/local/bin/hyprspace`
 6. (Optional) Run `sudo ln -s /usr/local/bin/hyprspace /usr/bin/hyprspace`
+
+#### AUR
+
+https://aur.archlinux.org/packages/hyprspace-git
+
+This AUR package is unofficial and is not controlled by me, please use at your own risk. The package may not be using the latest release so please run `sudo hyprspace update` once installed.
+
+1. Run `paru -S hyprspace-git`, the package already takes care of the manual steps above.
+2. (Optional) Run `sudo hyprspace update`
 
 ## Usage
 
