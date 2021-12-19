@@ -1,4 +1,4 @@
-<img src="hyprspace.png" width="300">
+<img src="hyprspace.png" width="250">
 
 # Hyprspace
 [![Go Report Card](https://goreportcard.com/badge/github.com/hyprspace/hyprspace)](https://goreportcard.com/report/github.com/hyprspace/hyprspace)
