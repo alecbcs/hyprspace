@@ -56,7 +56,7 @@ func CreateNode(ctx context.Context, cfg config.Interface) (node *Libp2pNode, er
 	// Setup connection manager
 	connMgr := connmgr.NewConnManager(
 		40,
-		400,
+		200,
 		time.Minute*1,
 	)
 
@@ -72,6 +72,7 @@ func CreateNode(ctx context.Context, cfg config.Interface) (node *Libp2pNode, er
 
 	if cfg.AutoRelay {
 		opts = libp2p.ChainOptions(libp2p.EnableAutoRelay(), opts)
+		opts = libp2p.ChainOptions(libp2p.EnableRelayService(), opts)
 	}
 
 	// Listen addresses
@@ -82,7 +83,7 @@ func CreateNode(ctx context.Context, cfg config.Interface) (node *Libp2pNode, er
 	ip4tcp := fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", cfg.ListenTCP)
 
 	// Create libp2p node
-	node.Host, err = libp2p.New(ctx,
+	node.Host, err = libp2p.New(
 		opts, // Config options
 		libp2p.ListenAddrStrings(ip6quic, ip4quic, ip6tcp, ip4tcp),
 		libp2p.Identity(privateKey),
@@ -103,9 +104,6 @@ func CreateNode(ctx context.Context, cfg config.Interface) (node *Libp2pNode, er
 	if err != nil {
 		return
 	}
-
-	// Setup reachability event chan
-	//node.SubReachability, _ = node.Host.EventBus().Subscribe(new(event.EvtLocalReachabilityChanged))
 
 	// Setup routing discovery
 	node.Discovery = discovery.NewRoutingDiscovery(node.KadDHT)

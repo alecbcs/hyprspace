@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"context"
 	"os"
 	"path/filepath"
 	"strings"
@@ -40,7 +39,7 @@ func InitRun(r *cmd.Root, c *cmd.Sub) {
 	}
 
 	// Create New Libp2p Node
-	host, err := libp2p.New(context.Background())
+	host, err := libp2p.New()
 	checkErr(err)
 
 	// Get Node's Private Key
