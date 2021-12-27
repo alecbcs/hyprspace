@@ -98,7 +98,7 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 
 	fmt.Println("[+] Creating TUN Device")
 	// Create new TUN device
-	iface, err = tun.New(cfg.Interface.Name)
+	iface, err = tun.New(cfg.Interface.Name, cfg.Interface.Address)
 	if err != nil {
 		checkErr(errors.New("interface already in use"))
 	}
