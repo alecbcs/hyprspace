@@ -9,7 +9,7 @@ import (
 )
 
 // New creates and returns a new TUN interface for the application.
-func New(name string) (result *water.Interface, err error) {
+func New(name, address string) (result *water.Interface, err error) {
 	// Setup TUN Config
 	cfg := water.Config{
 		DeviceType: water.TUN,

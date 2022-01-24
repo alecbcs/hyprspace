@@ -4,15 +4,15 @@
 package tun
 
 import (
-	"os/exec"
-	"net"
 	"fmt"
+	"net"
+	"os/exec"
 
 	"github.com/songgao/water"
 )
 
 // New creates and returns a new TUN interface for the application.
-func New(name string, address string) (result *water.Interface, err error) {
+func New(name, address string) (result *water.Interface, err error) {
 	// TUN on Windows requires address and network to be set on device creation stage
 	// We also set network to 0.0.0.0/0 so we able to reach networks behind the node
 	// https://github.com/songgao/water/blob/master/params_windows.go
@@ -23,7 +23,7 @@ func New(name string, address string) (result *water.Interface, err error) {
 	}
 	network := net.IPNet{
 		IP:   ip,
-		Mask: net.IPv4Mask(0,0,0,0),
+		Mask: net.IPv4Mask(0, 0, 0, 0),
 	}
 	// Setup TUN Config
 	cfg := water.Config{
