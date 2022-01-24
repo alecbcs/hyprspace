@@ -16,6 +16,7 @@ require (
 	github.com/multiformats/go-multiaddr v0.3.3
 	github.com/songgao/water v0.0.0-20200317203138-2b4b6d7c09d8
 	github.com/tcnksm/go-latest v0.0.0-20170313132115-e3007ae9052e
+	github.com/vishvananda/netlink v1.1.0
 	golang.org/x/net v0.0.0-20210428140749-89ef3d95e781
 	golang.org/x/sys v0.0.0-20210603125802-9665404d3644 // indirect
 	gopkg.in/yaml.v2 v2.4.0
