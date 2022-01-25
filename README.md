@@ -22,7 +22,7 @@ https://user-images.githubusercontent.com/19558067/121469777-f42cdb80-c971-11eb-
 - [Tutorial](#tutorial)
 
 ## A Bit of Backstory
-[Libp2p](libp2p.io) is a networking library created by [Protocol Labs](https://protocol.ai) that allows nodes to discover each other using a Distributed Hash Table. Paired with [NAT hole punching](https://en.wikipedia.org/wiki/Hole_punching_(networking)) this allows Hyprspace to create a direct encrypted tunnel between two nodes even if they're both behind firewalls.
+[Libp2p](https://libp2p.io) is a networking library created by [Protocol Labs](https://protocol.ai) that allows nodes to discover each other using a Distributed Hash Table. Paired with [NAT hole punching](https://en.wikipedia.org/wiki/Hole_punching_(networking)) this allows Hyprspace to create a direct encrypted tunnel between two nodes even if they're both behind firewalls.
 
 **Moreover! Each node doesn't even need to know the other's ip address prior to starting up the connection.** This makes Hyprspace perfect for devices that frequently migrate between locations but still require a constant virtual ip address.
 
