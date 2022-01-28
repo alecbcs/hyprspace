@@ -10,6 +10,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"runtime"
 	"strconv"
 	"strings"
 	"syscall"
@@ -22,14 +23,13 @@ import (
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/peer"
-	"github.com/songgao/water"
 	"golang.org/x/net/ipv4"
 )
 
 var (
 	// iface is the tun device used to pass packets between
 	// Hyprspace and the user's machine.
-	iface *water.Interface
+	tunDev *tun.TUN
 	// RevLookup allow quick lookups of an incoming stream
 	// for security before accepting or responding to any data.
 	RevLookup map[string]bool
@@ -97,15 +97,36 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 	}
 
 	fmt.Println("[+] Creating TUN Device")
-	// Create new TUN device
-	iface, err = tun.New(cfg.Interface.Name, cfg.Interface.Address)
-	if err != nil {
-		checkErr(errors.New("interface already in use"))
+
+	if runtime.GOOS == "darwin" {
+		if len(cfg.Peers) > 1 {
+			checkErr(errors.New("cannot create interface macos does not support more than one peer"))
+		}
+
+		// Grab ip address of only peer in config
+		var destPeer string
+		for ip := range cfg.Peers {
+			destPeer = ip
+		}
+
+		// Create new TUN device
+		tunDev, err = tun.New(
+			cfg.Interface.Name,
+			tun.Address(cfg.Interface.Address),
+			tun.DestAddress(destPeer),
+			tun.MTU(1420),
+		)
+	} else {
+		// Create new TUN device
+		tunDev, err = tun.New(
+			cfg.Interface.Name,
+			tun.Address(cfg.Interface.Address),
+			tun.MTU(1420),
+		)
 	}
-	// Set TUN MTU
-	tun.SetMTU(cfg.Interface.Name, 1420)
-	// Add Address to Interface
-	tun.SetAddress(cfg.Interface.Name, cfg.Interface.Address)
+	if err != nil {
+		checkErr(err)
+	}
 
 	// Setup System Context
 	ctx := context.Background()
@@ -113,34 +134,16 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 	fmt.Println("[+] Creating LibP2P Node")
 
 	// Check that the listener port is available.
-	var ln net.Listener
-	port := cfg.Interface.ListenPort
-	if port != 8001 {
-		ln, err = net.Listen("tcp", ":"+strconv.Itoa(port))
-		if err != nil {
-			checkErr(errors.New("could not create node, listen port already in use by something else"))
-		}
-	} else {
-		for {
-			ln, err = net.Listen("tcp", ":"+strconv.Itoa(port))
-			if err == nil {
-				break
-			}
-			if port >= 65535 {
-				checkErr(errors.New("failed to find open port"))
-			}
-			port++
-		}
-	}
-	if ln != nil {
-		ln.Close()
-	}
+	port, err := verifyPort(cfg.Interface.ListenPort)
+	checkErr(err)
 
 	// Create P2P Node
-	host, dht, err := p2p.CreateNode(ctx,
+	host, dht, err := p2p.CreateNode(
+		ctx,
 		cfg.Interface.PrivateKey,
 		port,
-		streamHandler)
+		streamHandler,
+	)
 	checkErr(err)
 
 	// Setup Peer Table for Quick Packet --> Dest ID lookup
@@ -170,7 +173,10 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 	}()
 
 	// Bring Up TUN Device
-	tun.Up(cfg.Interface.Name)
+	err = tunDev.Up()
+	if err != nil {
+		checkErr(errors.New("unable to bring up tun device"))
+	}
 
 	fmt.Println("[+] Network Setup Complete...Waiting on Node Discovery")
 	// Listen For New Packets on TUN Interface
@@ -179,7 +185,7 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 	var header *ipv4.Header
 	var plen int
 	for {
-		plen, err = iface.Read(packet)
+		plen, err = tunDev.Iface.Read(packet)
 		checkErr(err)
 		header, _ = ipv4.ParseHeader(packet)
 		_, ok := cfg.Peers[header.Dst.String()]
@@ -231,7 +237,7 @@ func streamHandler(stream network.Stream) {
 	if _, ok := RevLookup[stream.Conn().RemotePeer().Pretty()]; !ok {
 		stream.Reset()
 	}
-	io.Copy(iface.ReadWriteCloser, stream)
+	io.Copy(tunDev.Iface.ReadWriteCloser, stream)
 	stream.Close()
 }
 
@@ -255,4 +261,30 @@ func prettyDiscovery(ctx context.Context, node host.Host, peerTable map[string]p
 			delete(tempTable, ip)
 		}
 	}
+}
+
+func verifyPort(port int) (int, error) {
+	var ln net.Listener
+	var err error
+	if port != 8001 {
+		ln, err = net.Listen("tcp", ":"+strconv.Itoa(port))
+		if err != nil {
+			return port, errors.New("could not create node, listen port already in use by something else")
+		}
+	} else {
+		for {
+			ln, err = net.Listen("tcp", ":"+strconv.Itoa(port))
+			if err == nil {
+				break
+			}
+			if port >= 65535 {
+				return port, errors.New("failed to find open port")
+			}
+			port++
+		}
+	}
+	if ln != nil {
+		ln.Close()
+	}
+	return port, nil
 }
