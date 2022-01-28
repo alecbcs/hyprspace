@@ -12,7 +12,7 @@ import (
 )
 
 // New creates and returns a new TUN interface for the application.
-func New(name, address string) (result *water.Interface, err error) {
+func New(name string, opts ...Option) (*TUN, error) {
 	// TUN on Windows requires address and network to be set on device creation stage
 	// We also set network to 0.0.0.0/0 so we able to reach networks behind the node
 	// https://github.com/songgao/water/blob/master/params_windows.go
@@ -21,10 +21,12 @@ func New(name, address string) (result *water.Interface, err error) {
 	if err != nil {
 		return nil, err
 	}
+
 	network := net.IPNet{
 		IP:   ip,
 		Mask: net.IPv4Mask(0, 0, 0, 0),
 	}
+
 	// Setup TUN Config
 	cfg := water.Config{
 		DeviceType: water.TUN,
@@ -34,35 +36,54 @@ func New(name, address string) (result *water.Interface, err error) {
 			Network:       network.String(),
 		},
 	}
-	// Create TUN Interface
-	result, err = water.New(cfg)
-	return
+
+	// Create Water Interface
+	iface, err := water.New(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create TUN result struct
+	result := TUN{
+		Iface: iface,
+	}
+
+	// Apply options to set TUN config values
+	err = result.Apply(opts...)
+	return &result, err
 }
 
-// SetMTU sets the Maximum Tansmission Unit Size for a
+// setMTU sets the Maximum Tansmission Unit Size for a
 // Packet on the interface.
-func SetMTU(name string, mtu int) (err error) {
-	return netsh("interface", "ipv4", "set", "subinterface", name, "mtu=", fmt.Sprintf("%d", mtu))
+func (t *TUN) setMTU(mtu int) error {
+	return netsh("interface", "ipv4", "set", "subinterface", t.Iface.Name(), "mtu=", fmt.Sprintf("%d", mtu))
 }
 
-// SetAddress sets the interface's known address and subnet.
-func SetAddress(name string, address string) (err error) {
-	return netsh("interface", "ip", "set", "address", "name=", name, "static", address)
+// setAddress sets the interface's destination address and subnet.
+func (t *TUN) setAddress(address string) error {
+	return netsh("interface", "ip", "set", "address", "name=", t.Iface.Name(), "static", address)
+}
+
+// SetDestAddress isn't supported under Windows.
+// You should instead use set address to set the interface to handle
+// all addresses within a subnet.
+func (t *TUN) setDestAddress(address string) error {
+	return errors.New("destination addresses are not supported under windows")
 }
 
 // Up brings up an interface to allow it to start accepting connections.
-func Up(name string) (err error) {
-	return
+func (t *TUN) Up() error {
+	return nil
 }
 
 // Down brings down an interface stopping active connections.
-func Down(name string) (err error) {
-	return
+func (t *TUN) Down() error {
+	return nil
 }
 
 // Delete removes a TUN device from the host.
-func Delete(name string) (err error) {
-	return
+func Delete(name string) error {
+	return nil
 }
 
 func netsh(args ...string) (err error) {
