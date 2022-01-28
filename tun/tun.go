@@ -4,6 +4,7 @@ import "github.com/songgao/water"
 
 type TUN struct {
 	Iface *water.Interface
+	MTU   int
 	Src   string
 	Dst   string
 }

@@ -4,21 +4,29 @@
 package tun
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"os/exec"
-	"errors"
 
 	"github.com/songgao/water"
 )
 
 // New creates and returns a new TUN interface for the application.
-func New(name string, address string, opts ...Option) (*TUN, error) {
+func New(name string, opts ...Option) (*TUN, error) {
+	result := TUN{}
+
+	// Apply options early to set struct values for interface creation.
+	err := result.Apply(opts...)
+	if err != nil {
+		return nil, err
+	}
+
 	// TUN on Windows requires address and network to be set on device creation stage
 	// We also set network to 0.0.0.0/0 so we able to reach networks behind the node
 	// https://github.com/songgao/water/blob/master/params_windows.go
 	// https://gitlab.com/openconnect/openconnect/-/blob/master/tun-win32.c
-	ip, _, err := net.ParseCIDR(address)
+	ip, _, err := net.ParseCIDR(result.Src)
 	if err != nil {
 		return nil, err
 	}
@@ -38,33 +46,51 @@ func New(name string, address string, opts ...Option) (*TUN, error) {
 		},
 	}
 
-	// Enable interface
-	netsh("interface", "set", "interface", "name=", name, "enable")
-
 	// Create Water Interface
 	iface, err := water.New(cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	// Create TUN result struct
-	result := TUN{
-		Iface: iface,
+	// Set TUN interface to newly created interface
+	result.Iface = iface
+
+	// Apply options to setup TUN interface configuration
+	// Setup interface address
+	err = result.setupAddress(result.Src)
+	if err != nil {
+		return nil, err
 	}
 
-	// Apply options to set TUN config values
-	err = result.Apply(opts...)
+	// Setup interface mtu size
+	err = result.setupMTU(result.MTU)
+	if err != nil {
+		return nil, err
+	}
+
 	return &result, err
 }
 
-// setMTU sets the Maximum Tansmission Unit Size for a
-// Packet on the interface.
+// setMTU configures the interface's MTU.
 func (t *TUN) setMTU(mtu int) error {
+	t.MTU = mtu
+	return nil
+}
+
+// setAddress configures the interface's address.
+func (t *TUN) setAddress(address string) error {
+	t.Src = address
+	return nil
+}
+
+// setupMTU sets the Maximum Tansmission Unit Size for a
+// Packet on the interface.
+func (t *TUN) setupMTU(mtu int) error {
 	return netsh("interface", "ipv4", "set", "subinterface", t.Iface.Name(), "mtu=", fmt.Sprintf("%d", mtu))
 }
 
-// setAddress sets the interface's destination address and subnet.
-func (t *TUN) setAddress(address string) error {
+// setupAddress sets the interface's destination address and subnet.
+func (t *TUN) setupAddress(address string) error {
 	return netsh("interface", "ip", "set", "address", "name=", t.Iface.Name(), "static", address)
 }
 
@@ -77,7 +103,7 @@ func (t *TUN) setDestAddress(address string) error {
 
 // Up brings up an interface to allow it to start accepting connections.
 func (t *TUN) Up() error {
-	return nil
+	return netsh("interface", "set", "interface", "name=", t.Iface.Name(), "enable")
 }
 
 // Down brings down an interface stopping active connections.

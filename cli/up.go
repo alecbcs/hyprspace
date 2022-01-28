@@ -112,7 +112,6 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 		// Create new TUN device
 		tunDev, err = tun.New(
 			cfg.Interface.Name,
-			cfg.Interface.Address,
 			tun.Address(cfg.Interface.Address),
 			tun.DestAddress(destPeer),
 			tun.MTU(1420),
@@ -121,7 +120,6 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 		// Create new TUN device
 		tunDev, err = tun.New(
 			cfg.Interface.Name,
-			cfg.Interface.Address,
 			tun.Address(cfg.Interface.Address),
 			tun.MTU(1420),
 		)
