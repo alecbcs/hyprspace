@@ -45,10 +45,6 @@ If anyone else has some use cases please add them! Pull requests welcome!
 
 ## Getting Started
 ### Prerequisites
-If you're running Hyprspace on a Mac you'll need to install `iproute2mac`. If you're using the `brew` package manager that's as simple as,
-```bash
-brew install iproute2mac
-```
 If you're running Hyprspace on Windows you'll need to install [tap-windows](http://build.openvpn.net/downloads/releases/).
 
 ### Installation
@@ -181,7 +177,7 @@ sudo hyprspace down hs1
 
 ## License
 
-Copyright 2021 Alec Scott <hi@alecbcs.com>
+Copyright 2021-2022 Alec Scott <hi@alecbcs.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
