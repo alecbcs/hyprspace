@@ -7,12 +7,13 @@ import (
 	"fmt"
 	"net"
 	"os/exec"
+	"errors"
 
 	"github.com/songgao/water"
 )
 
 // New creates and returns a new TUN interface for the application.
-func New(name string, opts ...Option) (*TUN, error) {
+func New(name string, address string, opts ...Option) (*TUN, error) {
 	// TUN on Windows requires address and network to be set on device creation stage
 	// We also set network to 0.0.0.0/0 so we able to reach networks behind the node
 	// https://github.com/songgao/water/blob/master/params_windows.go

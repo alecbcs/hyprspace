@@ -11,7 +11,7 @@ import (
 )
 
 // New creates and returns a new TUN interface for the application.
-func New(name string, opts ...Option) (*TUN, error) {
+func New(name string, address string, opts ...Option) (*TUN, error) {
 	// Setup TUN Config
 	cfg := water.Config{
 		DeviceType: water.TUN,
