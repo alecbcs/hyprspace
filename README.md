@@ -49,6 +49,7 @@ If you're running Hyprspace on a Mac you'll need to install `iproute2mac`. If yo
 ```bash
 brew install iproute2mac
 ```
+If you're running Hyprspace on Windows you'll need to install [tap-windows](http://build.openvpn.net/downloads/releases/).
 
 ### Installation
 
@@ -87,6 +88,8 @@ interface on our local machine `hs0` (for hypr-space 0) and `hs1` on our remote 
 but yours could be anything you'd like. 
 
 (Note: if you're using a Mac you'll have to use the interface name `utun[0-9]`. Check which interfaces are already in use by running `ip a` once you've got `iproute2mac` installed.)
+
+(Note: if you're using Windows you'll have to use the interface name as seen in Control Panel. IP address will be set automatically only if you run Hyprspace as Administrator.)
 
 ###### Local Machine
 ```bash
