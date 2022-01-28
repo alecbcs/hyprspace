@@ -38,6 +38,9 @@ func New(name string, address string, opts ...Option) (*TUN, error) {
 		},
 	}
 
+	// Enable interface
+	netsh("interface", "set", "interface", "name=", name, "enable")
+
 	// Create Water Interface
 	iface, err := water.New(cfg)
 	if err != nil {
@@ -84,7 +87,7 @@ func (t *TUN) Down() error {
 
 // Delete removes a TUN device from the host.
 func Delete(name string) error {
-	return nil
+	return netsh("interface", "set", "interface", "name=", name, "disable")
 }
 
 func netsh(args ...string) (err error) {
