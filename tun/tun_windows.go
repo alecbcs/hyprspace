@@ -46,6 +46,10 @@ func New(name string, opts ...Option) (*TUN, error) {
 		},
 	}
 
+	// Interface should be enabled before creation of water interface
+	// Otherwise there will be an error "The system cannot find the file specified."
+	netsh("interface", "set", "interface", "name=", name, "enable")
+
 	// Create Water Interface
 	iface, err := water.New(cfg)
 	if err != nil {
@@ -103,7 +107,7 @@ func (t *TUN) setDestAddress(address string) error {
 
 // Up brings up an interface to allow it to start accepting connections.
 func (t *TUN) Up() error {
-	return netsh("interface", "set", "interface", "name=", t.Iface.Name(), "enable")
+	return nil
 }
 
 // Down brings down an interface stopping active connections.
