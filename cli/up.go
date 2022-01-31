@@ -30,7 +30,7 @@ var (
 	tunDev *tun.TUN
 	// RevLookup allow quick lookups of an incoming stream
 	// for security before accepting or responding to any data.
-	RevLookup map[string]bool
+	RevLookup map[string]string
 	// activeStreams is a map of active streams to a peer
 	activeStreams map[string]network.Stream
 )
@@ -91,9 +91,9 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 	}
 
 	// Setup reverse lookup hash map for authentication.
-	RevLookup = make(map[string]bool, len(cfg.Peers))
-	for _, id := range cfg.Peers {
-		RevLookup[id.ID] = true
+	RevLookup = make(map[string]string, len(cfg.Peers))
+	for ip, id := range cfg.Peers {
+		RevLookup[id.ID] = ip
 	}
 
 	fmt.Println("[+] Creating TUN Device")
@@ -200,9 +200,10 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 				continue
 			}
 			stream.Close()
+			delete(activeStreams, dst)
 			ok = false
 		}
-		if !ok {
+		if _, ok := peerTable[dst]; ok {
 			stream, err = host.NewStream(ctx, peerTable[dst], p2p.Protocol)
 			if err != nil {
 				log.Println(err)
@@ -257,8 +258,8 @@ func streamHandler(stream network.Stream) {
 	for {
 		plen, err = stream.Read(packet)
 		if err != nil {
-			log.Println(err)
 			stream.Close()
+			delete(activeStreams, RevLookup[stream.Conn().RemotePeer().Pretty()])
 			return
 		}
 		tunDev.Iface.Write(packet[:plen])
