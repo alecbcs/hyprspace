@@ -26,7 +26,8 @@ func DownRun(r *cmd.Root, c *cmd.Sub) {
 	// Parse Command Args
 	args := c.Args.(*DownArgs)
 
-	fmt.Println("[+] ip link delete dev " + args.InterfaceName)
 	err := tun.Delete(args.InterfaceName)
 	checkErr(err)
+
+	fmt.Println("[+] deleted hyprspace " + args.InterfaceName + " daemon")
 }
