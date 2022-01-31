@@ -33,6 +33,8 @@ var (
 	// RevLookup allow quick lookups of an incoming stream
 	// for security before accepting or responding to any data.
 	RevLookup map[string]bool
+	// activeStreams is a map of active streams to a peer
+	activeStreams map[string]network.Stream
 )
 
 // Up creates and brings up a Hyprspace Interface.
@@ -180,23 +182,36 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 
 	fmt.Println("[+] Network Setup Complete...Waiting on Node Discovery")
 	// Listen For New Packets on TUN Interface
-	packet := make([]byte, 1420)
+	activeStreams = make(map[string]network.Stream)
+	var packet = make([]byte, 1420)
 	var stream network.Stream
-	var header *ipv4.Header
+	var ok bool
 	var plen int
+	var dst string
 	for {
-		plen, err = tunDev.Iface.Read(packet)
-		checkErr(err)
-		header, _ = ipv4.ParseHeader(packet)
-		_, ok := cfg.Peers[header.Dst.String()]
+		plen, err = tunDev.Iface.Read([]byte(packet))
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+		dst = net.IPv4(packet[16], packet[17], packet[18], packet[19]).String()
+		stream, ok = activeStreams[dst]
 		if ok {
-			stream, err = host.NewStream(ctx, peerTable[header.Dst.String()], p2p.Protocol)
+			_, err = stream.Write([]byte(packet[:plen]))
+			if err == nil {
+				continue
+			}
+			stream.Close()
+			ok = false
+		}
+		if !ok {
+			stream, err = host.NewStream(ctx, peerTable[dst])
 			if err != nil {
 				log.Println(err)
 				continue
 			}
-			stream.Write(packet[:plen])
-			stream.Close()
+			stream.Write([]byte(packet[:plen]))
+			activeStreams[dst] = stream
 		}
 	}
 }
@@ -236,9 +251,27 @@ func streamHandler(stream network.Stream) {
 	// If the remote node ID isn't in the list of known nodes don't respond.
 	if _, ok := RevLookup[stream.Conn().RemotePeer().Pretty()]; !ok {
 		stream.Reset()
+		return
 	}
-	io.Copy(tunDev.Iface.ReadWriteCloser, stream)
-	stream.Close()
+	headers := io.LimitReader(stream, 20)
+	var err error
+	var header *ipv4.Header
+	var packetHeader = make([]byte, 20)
+
+	for {
+		_, err = headers.Read([]byte(packetHeader))
+		if err != nil {
+			stream.Close()
+			return
+		}
+		header, err = ipv4.ParseHeader(packetHeader)
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+		tunDev.Iface.Write(packetHeader)
+		io.CopyN(tunDev.Iface.ReadWriteCloser, stream, int64(header.TotalLen))
+	}
 }
 
 func prettyDiscovery(ctx context.Context, node host.Host, peerTable map[string]peer.ID) {
