@@ -9,6 +9,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
@@ -158,6 +159,9 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 	go p2p.Discover(ctx, host, dht, peerTable)
 	go prettyDiscovery(ctx, host, peerTable)
 
+	// Configure path for lock
+	lockPath := filepath.Join(filepath.Dir(cfg.Path), cfg.Interface.Name+".lock")
+
 	go func() {
 		// Wait for a SIGINT or SIGTERM signal
 		ch := make(chan os.Signal, 1)
@@ -169,8 +173,18 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 		if err := host.Close(); err != nil {
 			panic(err)
 		}
+
+		// Remove daemon lock from file system.
+		err = os.Remove(lockPath)
+		checkErr(err)
+
+		// Exit the application.
 		os.Exit(0)
 	}()
+
+	// Write lock to filesystem to indicate an existing running daemon.
+	err = os.WriteFile(lockPath, []byte(fmt.Sprint(os.Getpid())), os.ModePerm)
+	checkErr(err)
 
 	// Bring Up TUN Device
 	err = tunDev.Up()
@@ -182,18 +196,14 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 	// Listen For New Packets on TUN Interface
 	activeStreams = make(map[string]network.Stream)
 	var packet = make([]byte, 1420)
-	var stream network.Stream
-	var ok bool
-	var plen int
-	var dst string
 	for {
-		plen, err = tunDev.Iface.Read(packet)
+		plen, err := tunDev.Iface.Read(packet)
 		if err != nil {
 			log.Println(err)
 			continue
 		}
-		dst = net.IPv4(packet[16], packet[17], packet[18], packet[19]).String()
-		stream, ok = activeStreams[dst]
+		dst := net.IPv4(packet[16], packet[17], packet[18], packet[19]).String()
+		stream, ok := activeStreams[dst]
 		if ok {
 			_, err = stream.Write(packet[:plen])
 			if err == nil {
@@ -203,8 +213,8 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 			delete(activeStreams, dst)
 			ok = false
 		}
-		if _, ok := peerTable[dst]; ok {
-			stream, err = host.NewStream(ctx, peerTable[dst], p2p.Protocol)
+		if peer, ok := peerTable[dst]; ok {
+			stream, err = host.NewStream(ctx, peer, p2p.Protocol)
 			if err != nil {
 				log.Println(err)
 				continue
@@ -215,7 +225,7 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 	}
 }
 
-func createDaemon(cfg config.Config, out chan<- error) {
+func createDaemon(cfg *config.Config, out chan<- error) {
 	path, err := os.Executable()
 	checkErr(err)
 	// Create Pipe to monitor for daemon output.
@@ -238,6 +248,8 @@ func createDaemon(cfg config.Config, out chan<- error) {
 			count++
 		}
 	}
+
+	// Release the created daemon
 	err = process.Release()
 	checkErr(err)
 	if count < len(cfg.Peers) {
@@ -252,11 +264,9 @@ func streamHandler(stream network.Stream) {
 		stream.Reset()
 		return
 	}
-	var err error
 	var packet = make([]byte, 1420)
-	var plen int
 	for {
-		plen, err = stream.Read(packet)
+		plen, err := stream.Read(packet)
 		if err != nil {
 			stream.Close()
 			delete(activeStreams, RevLookup[stream.Conn().RemotePeer().Pretty()])
