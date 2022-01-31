@@ -14,7 +14,6 @@ require (
 	github.com/libp2p/go-libp2p-quic-transport v0.12.0
 	github.com/libp2p/go-tcp-transport v0.2.8
 	github.com/multiformats/go-multiaddr v0.3.3
-	github.com/songgao/packets v0.0.0-20160404182456-549a10cd4091
 	github.com/songgao/water v0.0.0-20200317203138-2b4b6d7c09d8
 	github.com/tcnksm/go-latest v0.0.0-20170313132115-e3007ae9052e
 	github.com/vishvananda/netlink v1.1.0

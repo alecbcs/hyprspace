@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"net"
 	"os"
@@ -23,7 +22,6 @@ import (
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/peer"
-	"golang.org/x/net/ipv4"
 )
 
 var (
@@ -189,7 +187,7 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 	var plen int
 	var dst string
 	for {
-		plen, err = tunDev.Iface.Read([]byte(packet))
+		plen, err = tunDev.Iface.Read(packet)
 		if err != nil {
 			log.Println(err)
 			continue
@@ -197,7 +195,7 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 		dst = net.IPv4(packet[16], packet[17], packet[18], packet[19]).String()
 		stream, ok = activeStreams[dst]
 		if ok {
-			_, err = stream.Write([]byte(packet[:plen]))
+			_, err = stream.Write(packet[:plen])
 			if err == nil {
 				continue
 			}
@@ -205,12 +203,12 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 			ok = false
 		}
 		if !ok {
-			stream, err = host.NewStream(ctx, peerTable[dst])
+			stream, err = host.NewStream(ctx, peerTable[dst], p2p.Protocol)
 			if err != nil {
 				log.Println(err)
 				continue
 			}
-			stream.Write([]byte(packet[:plen]))
+			stream.Write(packet[:plen])
 			activeStreams[dst] = stream
 		}
 	}
@@ -253,24 +251,17 @@ func streamHandler(stream network.Stream) {
 		stream.Reset()
 		return
 	}
-	headers := io.LimitReader(stream, 20)
 	var err error
-	var header *ipv4.Header
-	var packetHeader = make([]byte, 20)
-
+	var packet = make([]byte, 1420)
+	var plen int
 	for {
-		_, err = headers.Read([]byte(packetHeader))
+		plen, err = stream.Read(packet)
 		if err != nil {
+			log.Println(err)
 			stream.Close()
 			return
 		}
-		header, err = ipv4.ParseHeader(packetHeader)
-		if err != nil {
-			log.Println(err)
-			continue
-		}
-		tunDev.Iface.Write(packetHeader)
-		io.CopyN(tunDev.Iface.ReadWriteCloser, stream, int64(header.TotalLen))
+		tunDev.Iface.Write(packet[:plen])
 	}
 }
 
