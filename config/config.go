@@ -8,6 +8,7 @@ import (
 
 // Config is the main Configuration Struct for Hyprspace.
 type Config struct {
+	Path      string          `yaml:"path,omitempty"`
 	Interface Interface       `yaml:"interface"`
 	Peers     map[string]Peer `yaml:"peers"`
 }
@@ -27,12 +28,12 @@ type Peer struct {
 }
 
 // Read initializes a config from a file.
-func Read(path string) (result Config, err error) {
+func Read(path string) (*Config, error) {
 	in, err := os.ReadFile(path)
 	if err != nil {
-		return
+		return nil, err
 	}
-	result = Config{
+	result := Config{
 		Interface: Interface{
 			Name:       "hs0",
 			ListenPort: 8001,
@@ -41,6 +42,14 @@ func Read(path string) (result Config, err error) {
 			PrivateKey: "",
 		},
 	}
+
+	// Read in config settings from file.
 	err = yaml.Unmarshal(in, &result)
-	return
+	if err != nil {
+		return nil, err
+	}
+
+	// Overwrite path of config to input.
+	result.Path = path
+	return &result, nil
 }

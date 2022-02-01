@@ -5,11 +5,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"net"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
@@ -23,7 +23,6 @@ import (
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/peer"
-	"golang.org/x/net/ipv4"
 )
 
 var (
@@ -32,7 +31,9 @@ var (
 	tunDev *tun.TUN
 	// RevLookup allow quick lookups of an incoming stream
 	// for security before accepting or responding to any data.
-	RevLookup map[string]bool
+	RevLookup map[string]string
+	// activeStreams is a map of active streams to a peer
+	activeStreams map[string]network.Stream
 )
 
 // Up creates and brings up a Hyprspace Interface.
@@ -91,9 +92,9 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 	}
 
 	// Setup reverse lookup hash map for authentication.
-	RevLookup = make(map[string]bool, len(cfg.Peers))
-	for _, id := range cfg.Peers {
-		RevLookup[id.ID] = true
+	RevLookup = make(map[string]string, len(cfg.Peers))
+	for ip, id := range cfg.Peers {
+		RevLookup[id.ID] = ip
 	}
 
 	fmt.Println("[+] Creating TUN Device")
@@ -158,6 +159,9 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 	go p2p.Discover(ctx, host, dht, peerTable)
 	go prettyDiscovery(ctx, host, peerTable)
 
+	// Configure path for lock
+	lockPath := filepath.Join(filepath.Dir(cfg.Path), cfg.Interface.Name+".lock")
+
 	go func() {
 		// Wait for a SIGINT or SIGTERM signal
 		ch := make(chan os.Signal, 1)
@@ -169,8 +173,18 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 		if err := host.Close(); err != nil {
 			panic(err)
 		}
+
+		// Remove daemon lock from file system.
+		err = os.Remove(lockPath)
+		checkErr(err)
+
+		// Exit the application.
 		os.Exit(0)
 	}()
+
+	// Write lock to filesystem to indicate an existing running daemon.
+	err = os.WriteFile(lockPath, []byte(fmt.Sprint(os.Getpid())), os.ModePerm)
+	checkErr(err)
 
 	// Bring Up TUN Device
 	err = tunDev.Up()
@@ -180,28 +194,38 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 
 	fmt.Println("[+] Network Setup Complete...Waiting on Node Discovery")
 	// Listen For New Packets on TUN Interface
-	packet := make([]byte, 1420)
-	var stream network.Stream
-	var header *ipv4.Header
-	var plen int
+	activeStreams = make(map[string]network.Stream)
+	var packet = make([]byte, 1420)
 	for {
-		plen, err = tunDev.Iface.Read(packet)
-		checkErr(err)
-		header, _ = ipv4.ParseHeader(packet)
-		_, ok := cfg.Peers[header.Dst.String()]
+		plen, err := tunDev.Iface.Read(packet)
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+		dst := net.IPv4(packet[16], packet[17], packet[18], packet[19]).String()
+		stream, ok := activeStreams[dst]
 		if ok {
-			stream, err = host.NewStream(ctx, peerTable[header.Dst.String()], p2p.Protocol)
+			_, err = stream.Write(packet[:plen])
+			if err == nil {
+				continue
+			}
+			stream.Close()
+			delete(activeStreams, dst)
+			ok = false
+		}
+		if peer, ok := peerTable[dst]; ok {
+			stream, err = host.NewStream(ctx, peer, p2p.Protocol)
 			if err != nil {
 				log.Println(err)
 				continue
 			}
 			stream.Write(packet[:plen])
-			stream.Close()
+			activeStreams[dst] = stream
 		}
 	}
 }
 
-func createDaemon(cfg config.Config, out chan<- error) {
+func createDaemon(cfg *config.Config, out chan<- error) {
 	path, err := os.Executable()
 	checkErr(err)
 	// Create Pipe to monitor for daemon output.
@@ -224,6 +248,8 @@ func createDaemon(cfg config.Config, out chan<- error) {
 			count++
 		}
 	}
+
+	// Release the created daemon
 	err = process.Release()
 	checkErr(err)
 	if count < len(cfg.Peers) {
@@ -236,9 +262,18 @@ func streamHandler(stream network.Stream) {
 	// If the remote node ID isn't in the list of known nodes don't respond.
 	if _, ok := RevLookup[stream.Conn().RemotePeer().Pretty()]; !ok {
 		stream.Reset()
+		return
 	}
-	io.Copy(tunDev.Iface.ReadWriteCloser, stream)
-	stream.Close()
+	var packet = make([]byte, 1420)
+	for {
+		plen, err := stream.Read(packet)
+		if err != nil {
+			stream.Close()
+			delete(activeStreams, RevLookup[stream.Conn().RemotePeer().Pretty()])
+			return
+		}
+		tunDev.Iface.Write(packet[:plen])
+	}
 }
 
 func prettyDiscovery(ctx context.Context, node host.Host, peerTable map[string]peer.ID) {
