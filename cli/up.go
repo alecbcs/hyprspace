@@ -3,6 +3,7 @@ package cli
 import (
 	"bufio"
 	"context"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"log"
@@ -205,9 +206,12 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 		dst := net.IPv4(packet[16], packet[17], packet[18], packet[19]).String()
 		stream, ok := activeStreams[dst]
 		if ok {
-			_, err = stream.Write(packet[:plen])
+			err = binary.Write(stream, binary.LittleEndian, uint16(plen))
 			if err == nil {
-				continue
+				_, err = stream.Write(packet[:plen])
+				if err == nil {
+					continue
+				}
 			}
 			stream.Close()
 			delete(activeStreams, dst)
@@ -216,10 +220,18 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 		if peer, ok := peerTable[dst]; ok {
 			stream, err = host.NewStream(ctx, peer, p2p.Protocol)
 			if err != nil {
-				log.Println(err)
 				continue
 			}
-			stream.Write(packet[:plen])
+			err = binary.Write(stream, binary.LittleEndian, uint16(plen))
+			if err != nil {
+				stream.Close()
+				continue
+			}
+			_, err = stream.Write(packet[:plen])
+			if err != nil {
+				stream.Close()
+				continue
+			}
 			activeStreams[dst] = stream
 		}
 	}
@@ -265,14 +277,28 @@ func streamHandler(stream network.Stream) {
 		return
 	}
 	var packet = make([]byte, 1420)
+	var packetSize = make([]byte, 2)
 	for {
-		plen, err := stream.Read(packet)
+		_, err := stream.Read(packetSize)
 		if err != nil {
 			stream.Close()
-			delete(activeStreams, RevLookup[stream.Conn().RemotePeer().Pretty()])
 			return
 		}
-		tunDev.Iface.Write(packet[:plen])
+		size := binary.LittleEndian.Uint16(packetSize)
+		if err != nil {
+			stream.Close()
+			return
+		}
+		var plen uint16 = 0
+		for plen < size {
+			tmp, err := stream.Read(packet[plen:size])
+			plen += uint16(tmp)
+			if err != nil {
+				stream.Close()
+				return
+			}
+		}
+		tunDev.Iface.Write(packet[:size])
 	}
 }
 
