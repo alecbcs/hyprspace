@@ -285,10 +285,6 @@ func streamHandler(stream network.Stream) {
 			return
 		}
 		size := binary.LittleEndian.Uint16(packetSize)
-		if err != nil {
-			stream.Close()
-			return
-		}
 		var plen uint16 = 0
 		for plen < size {
 			tmp, err := stream.Read(packet[plen:size])
