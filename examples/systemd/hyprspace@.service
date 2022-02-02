@@ -2,8 +2,10 @@
 Description=hyprspace daemon for %i
 After=network-online.target
 Wants=network-online.target
+Requires=network-online.target
 
 [Service]
+ExecStartPre=/usr/bin/sleep 10
 ExecStart=/usr/local/bin/hyprspace up %i --foreground
 ExecStop=/usr/local/bin/hyprspace down %i
 Restart=on-failure
