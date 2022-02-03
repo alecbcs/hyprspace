@@ -6,7 +6,7 @@
 
 A Lightweight VPN Built on top of IPFS & Libp2p for Truly Distributed Networks. 
 
-https://user-images.githubusercontent.com/19558067/152395953-416e7f75-7798-47f7-ad6f-fc22065537bf.mp4
+https://user-images.githubusercontent.com/19558067/152407636-a5f4ae1f-9493-4346-bf73-0de109928415.mp4
 
 
 ## Table of Contents
