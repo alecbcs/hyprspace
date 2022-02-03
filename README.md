@@ -4,7 +4,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/hyprspace/hyprspace)](https://goreportcard.com/report/github.com/hyprspace/hyprspace)
 [![](https://img.shields.io/matrix/hyprspace:matrix.org)](https://matrix.to/#/%23hyprspace:matrix.org)
 
-A Lightweight VPN Built on top of Libp2p for Truly Distributed Networks. 
+A Lightweight VPN Built on top of IPFS & Libp2p for Truly Distributed Networks. 
 
 https://user-images.githubusercontent.com/19558067/121469777-f42cdb80-c971-11eb-84de-9dd4f6d6cd1f.mp4
 
