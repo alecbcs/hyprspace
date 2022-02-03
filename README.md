@@ -50,6 +50,13 @@ If you're running Hyprspace on Windows you'll need to install [tap-windows](http
 
 ### Installation
 
+#### Automatic (Linux & MacOS)
+```
+curl -L https://hyprspace.io/install.sh | bash
+```
+
+#### Manual
+
 1. Go to Hyprspace Releases (over there -->)
 2. Copy the link for your corresponding OS and Architecture.
 3. Run `sudo mkdir -p /usr/local/bin/`
