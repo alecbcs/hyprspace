@@ -4,7 +4,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/hyprspace/hyprspace)](https://goreportcard.com/report/github.com/hyprspace/hyprspace)
 [![](https://img.shields.io/matrix/hyprspace:matrix.org)](https://matrix.to/#/%23hyprspace:matrix.org)
 
-A Lightweight VPN Built on top of Libp2p for Truly Distributed Networks. 
+A Lightweight VPN Built on top of IPFS & Libp2p for Truly Distributed Networks. 
 
 https://user-images.githubusercontent.com/19558067/121469777-f42cdb80-c971-11eb-84de-9dd4f6d6cd1f.mp4
 
@@ -27,9 +27,9 @@ https://user-images.githubusercontent.com/19558067/121469777-f42cdb80-c971-11eb-
 **Moreover! Each node doesn't even need to know the other's ip address prior to starting up the connection.** This makes Hyprspace perfect for devices that frequently migrate between locations but still require a constant virtual ip address.
 
 ### So How Does Hyprspace Compare to Something Like Wireguard?
-[Wireguard](https://wireguard.com) is an amazing VPN written by Jason A. Donenfeld. If you haven't already, definitely go check it out! Wireguard actually inspired me to write Hyprspace. That said, although Wireguard is in a class of its own as a great VPN, it requires at least one of your nodes to have a public IP address. In this mode, as long as one of your nodes is publicly accessible, it can be used as a central relay to reach the other nodes in the network. However, this means that all of the traffic for your entire system is going through that one system which can slow down your network and make it fragile in the case that node goes down and you lose the whole network. So instead say that you want each node to be able to directly connect to each other as they do in Hyprspace. Unfortunately through Wireguard this would require every node to be publicly addressable which means manual port forwarding and no travelling nodes.
+[WireGuard](https://wireguard.com) is an amazing VPN written by Jason A. Donenfeld. If you haven't already, definitely go check it out! WireGuard actually inspired me to write Hyprspace. That said, although WireGuard is in a class of its own as a great VPN, it requires at least one of your nodes to have a public IP address. In this mode, as long as one of your nodes is publicly accessible, it can be used as a central relay to reach the other nodes in the network. However, this means that all of the traffic for your entire system is going through that one system which can slow down your network and make it fragile in the case that node goes down and you lose the whole network. So instead say that you want each node to be able to directly connect to each other as they do in Hyprspace. Unfortunately through WireGuard this would require every node to be publicly addressable which means manual port forwarding and no travelling nodes.
 
-By contrast Hyprspace allows all of your nodes to connect directly to each other creating a strong reliable network even if they're all behind their own firewalls. No manual port forwarding required! 
+By contrast Hyprspace allows all of your nodes to connect directly to each other creating a strong reliable network even if they're all behind their own NATs/firewalls. No manual port forwarding required! 
 
 ## Use Cases:
 ##### A Digital Nomad
@@ -44,7 +44,9 @@ If anyone else has some use cases please add them! Pull requests welcome!
 | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 
 ## Getting Started
+
 ### Prerequisites
+
 If you're running Hyprspace on Windows you'll need to install [tap-windows](http://build.openvpn.net/downloads/releases/).
 
 ### Installation
@@ -174,6 +176,10 @@ and,
 ```bash
 sudo hyprspace down hs1
 ```
+
+## Disclaimer & Copyright
+
+WireGuard is a registered trademark of Jason A. Donenfeld.
 
 ## License
 

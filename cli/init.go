@@ -1,8 +1,10 @@
 package cli
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/DataDrake/cli-ng/v2/cmd"
 	"github.com/hyprspace/hyprspace/config"
@@ -68,5 +70,17 @@ func InitRun(r *cmd.Root, c *cmd.Sub) {
 	_, err = f.Write(out)
 	checkErr(err)
 
-	f.Close()
+	err = f.Close()
+	checkErr(err)
+
+	// Print config creation message to user
+	fmt.Printf("Initialized new config at %s\n", configPath)
+	fmt.Println("To edit the config run,")
+	fmt.Println()
+	if strings.HasPrefix(configPath, "/etc/") {
+		fmt.Printf("    sudo nano %s\n", configPath)
+	} else {
+		fmt.Printf("    nano %s\n", configPath)
+	}
+	fmt.Println()
 }
