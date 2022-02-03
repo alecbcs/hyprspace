@@ -21,6 +21,7 @@ type Interface struct {
 	ID         string `yaml:"id"`
 	ListenPort int    `yaml:"listen_port"`
 	Address    string `yaml:"address"`
+	Router     string `yaml:"router"`
 	PrivateKey string `yaml:"private_key"`
 }
 
@@ -40,6 +41,7 @@ func Read(path string) (*Config, error) {
 			Name:       "hs0",
 			ListenPort: 8001,
 			Address:    "10.1.1.1/24",
+			Router:     "",
 			ID:         "",
 			PrivateKey: "",
 		},
