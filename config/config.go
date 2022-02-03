@@ -1,6 +1,8 @@
 package config
 
 import (
+	"fmt"
+	"net"
 	"os"
 
 	"gopkg.in/yaml.v2"
@@ -37,7 +39,7 @@ func Read(path string) (*Config, error) {
 		Interface: Interface{
 			Name:       "hs0",
 			ListenPort: 8001,
-			Address:    "10.1.1.1",
+			Address:    "10.1.1.1/24",
 			ID:         "",
 			PrivateKey: "",
 		},
@@ -47,6 +49,13 @@ func Read(path string) (*Config, error) {
 	err = yaml.Unmarshal(in, &result)
 	if err != nil {
 		return nil, err
+	}
+
+	// Check peers have valid ip addresses
+	for ip := range result.Peers {
+		if net.ParseIP(ip).String() == "<nil>" {
+			return nil, fmt.Errorf("%s is not a valid ip address", ip)
+		}
 	}
 
 	// Overwrite path of config to input.
