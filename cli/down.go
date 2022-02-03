@@ -52,7 +52,7 @@ func DownRun(r *cmd.Root, c *cmd.Sub) {
 
 	// Different types of systems may need the tun devices destroyed first or
 	// the process to exit first don't worry as long as one of these two has
-	// suceeded.
+	// succeeded.
 	if err0 != nil && err1 != nil {
 		checkErr(err0)
 		checkErr(err1)

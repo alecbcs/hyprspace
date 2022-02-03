@@ -301,6 +301,9 @@ func createDaemon(cfg *config.Config) error {
 			fmt.Println(line.Text)
 			if strings.HasPrefix(line.Text, "[+] Connection to") {
 				numConnected++
+				if numConnected >= len(cfg.Peers) {
+					break
+				}
 			}
 		}
 		out <- numConnected
