@@ -197,8 +197,9 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 		// Rewrite destination if router option has passed
 		if cfg.Interface.Router != "" {
 			src := net.IPv4(packet[12], packet[13], packet[14], packet[15])
-			// Only rewrite if initiator is us
-			if src.Equal(ip) {
+			_, ok := peerTable[dst]
+			// Only rewrite if initiator is us or receiver is not a known peer
+			if src.Equal(ip) && !ok {
 				dst = cfg.Interface.Router
 			}
 		}
