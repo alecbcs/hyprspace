@@ -179,6 +179,10 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 	// Initialize active streams map and packet byte array.
 	activeStreams = make(map[string]network.Stream)
 	var packet = make([]byte, 1420)
+	ip, _, err := net.ParseCIDR(cfg.Interface.Address)
+	if err != nil {
+		checkErr(errors.New("unable to parse address"))
+	}
 	for {
 		// Read in a packet from the tun device.
 		plen, err := tunDev.Iface.Read(packet)
@@ -187,8 +191,21 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 			continue
 		}
 
-		// Decode the packet's destination address
-		dst := net.IPv4(packet[16], packet[17], packet[18], packet[19]).String()
+		dstIP := net.IPv4(packet[16], packet[17], packet[18], packet[19])
+		dst := dstIP.String()
+
+		// Check route table for destination address.
+		for route, _ := range cfg.Routes {
+			_, network, _ := net.ParseCIDR(route)
+			if network.Contains(dstIP) {
+				src := net.IPv4(packet[12], packet[13], packet[14], packet[15])
+				_, ok := peerTable[dst]
+				// Only rewrite if initiator is us or receiver is not a known peer
+				if src.Equal(ip) && !ok {
+					dst = cfg.Routes[route].IP
+				}
+			}
+		}
 
 		// Check if we already have an open connection to the destination peer.
 		stream, ok := activeStreams[dst]

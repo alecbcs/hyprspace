@@ -187,6 +187,49 @@ sudo hyprspace down hs1
 
 WireGuard is a registered trademark of Jason A. Donenfeld.
 
+
+## Routes
+
+### Prepare each route node:
+
+```
+# sysctl -n net.ipv4.ip_forward
+0
+# sysctl -w net.ipv4.ip_forward=1
+iptables -t nat -A POSTROUTING -s <YOUR_TUN_NET>/24 -o eth0 -j MASQUERADE
+iptables -A FORWARD 1 -i <HS_TUN> -o <DEV_GATEWAY> -j ACCEPT
+iptables -A FORWARD 1 -i <DEV_GATEWAY> -o <HS_TUN> -j ACCEPT
+
+```
+Determine gateway router:
+```
+# curl ifconfg.me
+<GATEWAY_ROUTER>
+```
+
+### Configure client:
+Config hyprspace yaml configuration file:
+```
+interface:
+  ...
+peers:
+  ID: ...
+  ...
+routes:
+  192.168.3.0/24:
+    ip: 10.0.0.3
+  0.0.0.0/0:
+    ip: 10.0.0.1
+
+```
+Prepare routes
+```
+One for each route:
+# ip route add <GATEWAY_ROUTER> via <YOUR_GATEWAY> 
+
+And all traffic for hyprspace tun
+# ip route add default dev <HS_TUN> metric 1
+```
 ## License
 
 Copyright 2021-2022 Alec Scott <hi@alecbcs.com>
