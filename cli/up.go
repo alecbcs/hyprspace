@@ -155,7 +155,7 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 	fmt.Println("[+] Setting Up Node Discovery via DHT")
 
 	// Setup P2P Discovery
-	go p2p.Discover(ctx, host, dht, peerTable)
+	go p2p.Discover(ctx, host, dht, peerTable, cfg.Interface.Name)
 	go prettyDiscovery(ctx, host, peerTable)
 
 	// Configure path for lock
