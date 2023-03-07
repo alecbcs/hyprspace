@@ -2,8 +2,10 @@ package p2p
 
 import (
 	"context"
+	"fmt"
 	"time"
 
+	"github.com/hyprspace/hyprspace/config"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/network"
@@ -15,21 +17,36 @@ func Discover(ctx context.Context, h host.Host, dht *dht.IpfsDHT, peerTable map[
 	ticker := time.NewTicker(time.Second * 5)
 	defer ticker.Stop()
 
+	verbose := ctx.Value(config.WithVerbose) != nil
+	if verbose {
+		fmt.Println("[+] Starting Discover thread")
+	}
+
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			for _, id := range peerTable {
+			for ip, id := range peerTable {
 				if h.Network().Connectedness(id) != network.Connected {
 					addrs, err := dht.FindPeer(ctx, id)
 					if err != nil {
+						if verbose {
+							fmt.Printf("[!] Couldn't find Peer(%s): %v\n", id, err)
+						}
 						continue
 					}
 					_, err = h.Network().DialPeer(ctx, addrs.ID)
 					if err != nil {
+						if verbose {
+							fmt.Printf("[!] Couldn't dial Peer(%s): %v\n", id, err)
+						}
 						continue
 					}
+				}
+
+				if verbose {
+					fmt.Printf("[+] Connection to %s is alive\n", ip)
 				}
 			}
 		}

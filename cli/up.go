@@ -71,9 +71,16 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 		configPath = "/etc/hyprspace/" + args.InterfaceName + ".yaml"
 	}
 
+	// Setup System Context
+	ctx := context.Background()
+
 	// Read in configuration from file.
 	cfg, err := config.Read(configPath)
 	checkErr(err)
+
+	if cfg.Verbose {
+		ctx = context.WithValue(ctx, config.WithVerbose, true)
+	}
 
 	if !flags.Foreground {
 		if err := createDaemon(cfg); err != nil {
@@ -122,9 +129,6 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 	if err != nil {
 		checkErr(err)
 	}
-
-	// Setup System Context
-	ctx := context.Background()
 
 	fmt.Println("[+] Creating LibP2P Node")
 

@@ -45,6 +45,7 @@ func CreateNode(ctx context.Context, inputKey string, port int, handler network.
 		libp2p.Transport(libp2pquic.NewTransport),
 		libp2p.Transport(tcp.NewTCPTransport),
 		libp2p.FallbackDefaults,
+		libp2p.EnableNATService(),
 	)
 	if err != nil {
 		return
