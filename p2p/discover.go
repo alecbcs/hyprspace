@@ -25,6 +25,15 @@ func Discover(ctx context.Context, h host.Host, dht *dht.IpfsDHT, peerTable map[
 
 	s := make(state.ConnectionState)
 
+	go func() {
+		err := <-dht.RefreshRoutingTable()
+		if err != nil {
+			fmt.Printf("[!] Error Refreshing Routing Table: %v\n", err)
+		} else {
+			fmt.Println("[+] DHT Routing Table refreshed")
+		}
+	}()
+
 	for {
 		select {
 		case <-ctx.Done():
