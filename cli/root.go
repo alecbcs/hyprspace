@@ -29,6 +29,7 @@ func init() {
 
 	cmd.Register(&cmd.Help)
 	cmd.Register(&Init)
+	cmd.Register(&Id)
 	cmd.Register(&Add)
 	cmd.Register(&Up)
 	cmd.Register(&Down)
