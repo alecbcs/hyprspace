@@ -93,6 +93,9 @@ func CreateNode(ctx context.Context, inputKey string, port int, handler network.
 	lock := sync.Mutex{}
 	count := 0
 	wg.Add(len(BootstrapPeers))
+
+	fmt.Println("[+] Connecting Bootstrap Peers")
+
 	for _, peerInfo := range BootstrapPeers {
 		go func(peerInfo *peer.AddrInfo) {
 			defer wg.Done()
@@ -100,12 +103,19 @@ func CreateNode(ctx context.Context, inputKey string, port int, handler network.
 			if err == nil {
 				lock.Lock()
 				count++
+				fmt.Printf("    -> Connected Peer: %s\n", peerInfo.String())
 				lock.Unlock()
 
 			}
 		}(peerInfo)
 	}
 	wg.Wait()
+
+	//Exit on DHT bootstrap error
+	fmt.Println("[+] Bootstrapping DHT")
+	if err := dhtOut.Bootstrap(ctx); err != nil {
+		return node, dhtOut, err
+	}
 
 	if count < 1 {
 		return node, dhtOut, errors.New("unable to bootstrap libp2p node")
