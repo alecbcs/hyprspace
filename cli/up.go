@@ -145,6 +145,10 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 	)
 	checkErr(err)
 
+	if cfg.Verbose {
+		go p2p.DebugEvents(host, dht)
+	}
+
 	// Setup Peer Table for Quick Packet --> Dest ID lookup
 	peerTable := make(map[string]peer.ID)
 	for ip, id := range cfg.Peers {
