@@ -11,7 +11,7 @@ import (
 
 var appVersion string = "develop"
 
-//GlobalFlags contains the flags for commands.
+// GlobalFlags contains the flags for commands.
 type GlobalFlags struct {
 	Config string `short:"c" long:"config" desc:"Specify a custom config path."`
 }
@@ -29,6 +29,8 @@ func init() {
 
 	cmd.Register(&cmd.Help)
 	cmd.Register(&Init)
+	cmd.Register(&Id)
+	cmd.Register(&Add)
 	cmd.Register(&Up)
 	cmd.Register(&Down)
 	cmd.Register(&Update)

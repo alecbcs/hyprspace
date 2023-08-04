@@ -20,9 +20,9 @@ import (
 	"github.com/hyprspace/hyprspace/config"
 	"github.com/hyprspace/hyprspace/p2p"
 	"github.com/hyprspace/hyprspace/tun"
-	"github.com/libp2p/go-libp2p-core/host"
-	"github.com/libp2p/go-libp2p-core/network"
-	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/libp2p/go-libp2p/core/host"
+	"github.com/libp2p/go-libp2p/core/network"
+	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/nxadm/tail"
 )
 
@@ -71,9 +71,16 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 		configPath = "/etc/hyprspace/" + args.InterfaceName + ".yaml"
 	}
 
+	// Setup System Context
+	ctx := context.Background()
+
 	// Read in configuration from file.
 	cfg, err := config.Read(configPath)
 	checkErr(err)
+
+	if cfg.Verbose {
+		ctx = context.WithValue(ctx, config.WithVerbose, true)
+	}
 
 	if !flags.Foreground {
 		if err := createDaemon(cfg); err != nil {
@@ -123,9 +130,6 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 		checkErr(err)
 	}
 
-	// Setup System Context
-	ctx := context.Background()
-
 	fmt.Println("[+] Creating LibP2P Node")
 
 	// Check that the listener port is available.
@@ -141,6 +145,10 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 	)
 	checkErr(err)
 
+	if cfg.Verbose {
+		go p2p.DebugEvents(host, dht)
+	}
+
 	// Setup Peer Table for Quick Packet --> Dest ID lookup
 	peerTable := make(map[string]peer.ID)
 	for ip, id := range cfg.Peers {
@@ -151,7 +159,7 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 	fmt.Println("[+] Setting Up Node Discovery via DHT")
 
 	// Setup P2P Discovery
-	go p2p.Discover(ctx, host, dht, peerTable)
+	go p2p.Discover(ctx, host, dht, peerTable, cfg.Interface.Name)
 	go prettyDiscovery(ctx, host, peerTable)
 
 	// Configure path for lock

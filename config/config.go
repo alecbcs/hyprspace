@@ -10,6 +10,7 @@ import (
 
 // Config is the main Configuration Struct for Hyprspace.
 type Config struct {
+	Verbose   bool            `yaml:"verbose"`
 	Path      string           `yaml:"path,omitempty"`
 	Interface Interface        `yaml:"interface"`
 	Peers     map[string]Peer  `yaml:"peers"`
@@ -78,3 +79,7 @@ func Read(path string) (*Config, error) {
 	result.Path = path
 	return &result, nil
 }
+
+type ContextKey string
+
+const WithVerbose = ContextKey("hs-verbose")

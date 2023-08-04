@@ -8,13 +8,13 @@ import (
 
 	"github.com/ipfs/go-datastore"
 	"github.com/libp2p/go-libp2p"
-	"github.com/libp2p/go-libp2p-core/crypto"
-	"github.com/libp2p/go-libp2p-core/host"
-	"github.com/libp2p/go-libp2p-core/network"
-	"github.com/libp2p/go-libp2p-core/peer"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
-	libp2pquic "github.com/libp2p/go-libp2p-quic-transport"
-	"github.com/libp2p/go-tcp-transport"
+	"github.com/libp2p/go-libp2p/core/crypto"
+	"github.com/libp2p/go-libp2p/core/host"
+	"github.com/libp2p/go-libp2p/core/network"
+	"github.com/libp2p/go-libp2p/core/peer"
+	libp2pquic "github.com/libp2p/go-libp2p/p2p/transport/quic"
+	"github.com/libp2p/go-libp2p/p2p/transport/tcp"
 	ma "github.com/multiformats/go-multiaddr"
 )
 
@@ -45,6 +45,7 @@ func CreateNode(ctx context.Context, inputKey string, port int, handler network.
 		libp2p.Transport(libp2pquic.NewTransport),
 		libp2p.Transport(tcp.NewTCPTransport),
 		libp2p.FallbackDefaults,
+		libp2p.EnableNATService(),
 	)
 	if err != nil {
 		return
@@ -64,6 +65,7 @@ func CreateNode(ctx context.Context, inputKey string, port int, handler network.
 		"/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN",
 		"/dnsaddr/bootstrap.libp2p.io/p2p/QmQCU2EcMqAqQPR2i9bChDtGNJchTbq5TbXJJ16u19uLTa",
 		"/dnsaddr/bootstrap.libp2p.io/p2p/QmbLHAnMoJPWSCR5Zhtx6BHJX9KiKNN6tpvbUcqanj75Nb",
+		"/dnsaddr/bootstrap.libp2p.io/p2p/QmcZf59bWwK5XFi76CZX8cbJ4BhTzzA3gU1ZjYZcYW3dwt",
 	}
 
 	// Convert Bootstap Nodes into usable addresses.
@@ -91,6 +93,9 @@ func CreateNode(ctx context.Context, inputKey string, port int, handler network.
 	lock := sync.Mutex{}
 	count := 0
 	wg.Add(len(BootstrapPeers))
+
+	fmt.Println("[+] Connecting Bootstrap Peers")
+
 	for _, peerInfo := range BootstrapPeers {
 		go func(peerInfo *peer.AddrInfo) {
 			defer wg.Done()
@@ -98,12 +103,19 @@ func CreateNode(ctx context.Context, inputKey string, port int, handler network.
 			if err == nil {
 				lock.Lock()
 				count++
+				fmt.Printf("    -> Connected Peer: %s\n", peerInfo.String())
 				lock.Unlock()
 
 			}
 		}(peerInfo)
 	}
 	wg.Wait()
+
+	//Exit on DHT bootstrap error
+	fmt.Println("[+] Bootstrapping DHT")
+	if err := dhtOut.Bootstrap(ctx); err != nil {
+		return node, dhtOut, err
+	}
 
 	if count < 1 {
 		return node, dhtOut, errors.New("unable to bootstrap libp2p node")
