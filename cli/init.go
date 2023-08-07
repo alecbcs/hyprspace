@@ -9,7 +9,7 @@ import (
 	"github.com/DataDrake/cli-ng/v2/cmd"
 	"github.com/hyprspace/hyprspace/config"
 	"github.com/libp2p/go-libp2p"
-	"github.com/libp2p/go-libp2p-core/crypto"
+	"github.com/libp2p/go-libp2p/core/crypto"
 	"gopkg.in/yaml.v2"
 )
 

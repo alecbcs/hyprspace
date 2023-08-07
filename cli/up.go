@@ -20,9 +20,9 @@ import (
 	"github.com/hyprspace/hyprspace/config"
 	"github.com/hyprspace/hyprspace/p2p"
 	"github.com/hyprspace/hyprspace/tun"
-	"github.com/libp2p/go-libp2p-core/host"
-	"github.com/libp2p/go-libp2p-core/network"
-	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/libp2p/go-libp2p/core/host"
+	"github.com/libp2p/go-libp2p/core/network"
+	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/nxadm/tail"
 )
 
@@ -71,9 +71,16 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 		configPath = "/etc/hyprspace/" + args.InterfaceName + ".yaml"
 	}
 
+	// Setup System Context
+	ctx := context.Background()
+
 	// Read in configuration from file.
 	cfg, err := config.Read(configPath)
 	checkErr(err)
+
+	if cfg.Verbose {
+		ctx = context.WithValue(ctx, config.WithVerbose, true)
+	}
 
 	if !flags.Foreground {
 		if err := createDaemon(cfg); err != nil {
@@ -123,9 +130,6 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 		checkErr(err)
 	}
 
-	// Setup System Context
-	ctx := context.Background()
-
 	fmt.Println("[+] Creating LibP2P Node")
 
 	// Check that the listener port is available.
@@ -141,6 +145,10 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 	)
 	checkErr(err)
 
+	if cfg.Verbose {
+		go p2p.DebugEvents(host, dht)
+	}
+
 	// Setup Peer Table for Quick Packet --> Dest ID lookup
 	peerTable := make(map[string]peer.ID)
 	for ip, id := range cfg.Peers {
@@ -151,7 +159,7 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 	fmt.Println("[+] Setting Up Node Discovery via DHT")
 
 	// Setup P2P Discovery
-	go p2p.Discover(ctx, host, dht, peerTable)
+	go p2p.Discover(ctx, host, dht, peerTable, cfg.Interface.Name)
 	go prettyDiscovery(ctx, host, peerTable)
 
 	// Configure path for lock
@@ -179,6 +187,10 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 	// Initialize active streams map and packet byte array.
 	activeStreams = make(map[string]network.Stream)
 	var packet = make([]byte, 1420)
+	ip, _, err := net.ParseCIDR(cfg.Interface.Address)
+	if err != nil {
+		checkErr(errors.New("unable to parse address"))
+	}
 	for {
 		// Read in a packet from the tun device.
 		plen, err := tunDev.Iface.Read(packet)
@@ -187,8 +199,21 @@ func UpRun(r *cmd.Root, c *cmd.Sub) {
 			continue
 		}
 
-		// Decode the packet's destination address
-		dst := net.IPv4(packet[16], packet[17], packet[18], packet[19]).String()
+		dstIP := net.IPv4(packet[16], packet[17], packet[18], packet[19])
+		dst := dstIP.String()
+
+		// Check route table for destination address.
+		for route, _ := range cfg.Routes {
+			_, network, _ := net.ParseCIDR(route)
+			if network.Contains(dstIP) {
+				src := net.IPv4(packet[12], packet[13], packet[14], packet[15])
+				_, ok := peerTable[dst]
+				// Only rewrite if initiator is us or receiver is not a known peer
+				if src.Equal(ip) && !ok {
+					dst = cfg.Routes[route].IP
+				}
+			}
+		}
 
 		// Check if we already have an open connection to the destination peer.
 		stream, ok := activeStreams[dst]
@@ -355,10 +380,16 @@ func streamHandler(stream network.Stream) {
 				return
 			}
 		}
-		tunDev.Iface.Write(packet[:size])
+		// If the protocol package is 0x98 this package is for VPN control (https://en.wikipedia.org/wiki/List_of_IP_protocol_numbers)
+		if packet[9] == 0x98 {
+			// Tractem VPN Control Protocol
+			fmt.Print("VPN Control Packetn\n")
+			Dump(packet[:size])
+		} else {
+			tunDev.Iface.Write(packet[:size])
+		}
 	}
 }
-
 func prettyDiscovery(ctx context.Context, node host.Host, peerTable map[string]peer.ID) {
 	// Build a temporary map of peers to limit querying to only those
 	// not connected.
