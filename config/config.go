@@ -10,7 +10,7 @@ import (
 
 // Config is the main Configuration Struct for Hyprspace.
 type Config struct {
-	Verbose   bool            `yaml:"verbose"`
+	Verbose   bool             `yaml:"verbose"`
 	Path      string           `yaml:"path,omitempty"`
 	Interface Interface        `yaml:"interface"`
 	Peers     map[string]Peer  `yaml:"peers"`
