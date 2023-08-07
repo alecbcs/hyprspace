@@ -380,10 +380,16 @@ func streamHandler(stream network.Stream) {
 				return
 			}
 		}
-		tunDev.Iface.Write(packet[:size])
+		// If the protocol package is 0x98 this package is for VPN control (https://en.wikipedia.org/wiki/List_of_IP_protocol_numbers)
+		if packet[9] == 0x98 {
+			// Tractem VPN Control Protocol
+			fmt.Print("VPN Control Packetn\n")
+			Dump(packet[:size])
+		} else {
+			tunDev.Iface.Write(packet[:size])
+		}
 	}
 }
-
 func prettyDiscovery(ctx context.Context, node host.Host, peerTable map[string]peer.ID) {
 	// Build a temporary map of peers to limit querying to only those
 	// not connected.
