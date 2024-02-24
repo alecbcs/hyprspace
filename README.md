@@ -1,6 +1,8 @@
-<img src="hyprspace.png" width="250">
+<img src="hyprspace.png" width="150">
 
 # Hyprspace
+> :warning: This project has been archived and is no longer maintained.
+
 [![Go Report Card](https://goreportcard.com/badge/github.com/hyprspace/hyprspace)](https://goreportcard.com/report/github.com/hyprspace/hyprspace)
 [![](https://img.shields.io/matrix/hyprspace:matrix.org)](https://matrix.to/#/%23hyprspace:matrix.org)
 
@@ -49,13 +51,6 @@ If anyone else has some use cases please add them! Pull requests welcome!
 If you're running Hyprspace on Windows you'll need to install [tap-windows](http://build.openvpn.net/downloads/releases/).
 
 ### Installation
-
-#### Automatic (Linux & MacOS)
-```
-curl -L https://hyprspace.io/install.sh | bash
-```
-
-#### Manual
 
 1. Go to Hyprspace Releases (over there -->)
 2. Copy the link for your corresponding OS and Architecture.
