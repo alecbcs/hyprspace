@@ -3,9 +3,6 @@
 # Hyprspace
 > :warning: This project has been archived and is no longer maintained.
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/hyprspace/hyprspace)](https://goreportcard.com/report/github.com/hyprspace/hyprspace)
-[![](https://img.shields.io/matrix/hyprspace:matrix.org)](https://matrix.to/#/%23hyprspace:matrix.org)
-
 A Lightweight VPN Built on top of IPFS & Libp2p for Truly Distributed Networks. 
 
 https://user-images.githubusercontent.com/19558067/152407636-a5f4ae1f-9493-4346-bf73-0de109928415.mp4
